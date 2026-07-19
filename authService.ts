@@ -1,15 +1,16 @@
-import { Word, WordStatusMap, MarkedWordsMap, StudySet, ThemeMode } from './types';
+import { Word, WordStatusMap, MarkedWordsMap, StudySet, ThemeMode, DailyProgress } from './types';
 
 // ============================
 // IndexedDB Configuration
 // ============================
 const DB_NAME = 'ssat_vocab_mastery_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORES = {
     USERS: 'users',
     USER_DATA: 'userData',
     USER_PREFERENCES: 'userPreferences',
+    DAILY_PROGRESS: 'dailyProgress',
 };
 
 // ============================
@@ -35,6 +36,8 @@ interface UserPreferences {
     showDefaultVocab: boolean;
     showSatVocab?: boolean;
     isPro?: boolean;
+    reminderEnabled?: boolean;
+    reminderTime?: string;
 }
 
 interface AuthResult {
@@ -81,6 +84,11 @@ function openDatabase(): Promise<IDBDatabase> {
             // User preferences store (theme, settings)
             if (!db.objectStoreNames.contains(STORES.USER_PREFERENCES)) {
                 db.createObjectStore(STORES.USER_PREFERENCES, { keyPath: 'username' });
+            }
+
+            // Daily progress store (daily vocab assignments)
+            if (!db.objectStoreNames.contains(STORES.DAILY_PROGRESS)) {
+                db.createObjectStore(STORES.DAILY_PROGRESS, { keyPath: 'key' });
             }
         };
     });
@@ -190,7 +198,7 @@ export const authService = {
         };
         await dbPut(STORES.USER_PREFERENCES, preferences);
 
-        return { success: true, message: 'Account created successfully! Please log in.' };
+        return { success: true, message: 'Account created successfully!', user: normalized };
     },
 
     async login(username: string, password: string): Promise<AuthResult> {
@@ -399,7 +407,14 @@ export const authService = {
         return null;
     },
 
-    async saveUserPreferences(theme: ThemeMode, showDefaultVocab: boolean, isPro?: boolean, showSatVocab?: boolean): Promise<void> {
+    async saveUserPreferences(
+        theme: ThemeMode, 
+        showDefaultVocab: boolean, 
+        isPro?: boolean, 
+        showSatVocab?: boolean,
+        reminderEnabled?: boolean,
+        reminderTime?: string
+    ): Promise<void> {
         const username = getSession() || sessionStorage.getItem(SESSION_KEY);
         if (!username || username.startsWith('guest_')) return;
 
@@ -410,7 +425,9 @@ export const authService = {
             theme,
             showDefaultVocab,
             showSatVocab: showSatVocab ?? existing?.showSatVocab ?? false,
-            isPro: isPro ?? existing?.isPro ?? false // Retrieve existing if not provided
+            isPro: isPro ?? existing?.isPro ?? false,
+            reminderEnabled: reminderEnabled !== undefined ? reminderEnabled : (existing as any)?.reminderEnabled ?? false,
+            reminderTime: reminderTime !== undefined ? reminderTime : (existing as any)?.reminderTime ?? '09:00'
         };
 
         // Save to IndexedDB
@@ -951,5 +968,94 @@ export const authService = {
             customSetsCount: userData.savedSets.length,
             lastActivity: null, // Could be enhanced to track this
         };
-    }
+    },
+
+    // ----------------
+    // Daily Progress
+    // ----------------
+    async getDailyProgress(date: string): Promise<DailyProgress | null> {
+        const username = getSession();
+        if (!username) return null;
+
+        const key = `${username.toLowerCase()}_${date}`;
+
+        // Try IndexedDB first
+        try {
+            const record = await dbGet<{ key: string } & DailyProgress>(STORES.DAILY_PROGRESS, key);
+            if (record) {
+                const { key: _k, ...progress } = record;
+                return progress;
+            }
+        } catch (e) {
+            // IndexedDB might not have the store yet (version migration)
+        }
+
+        // Fallback to localStorage
+        const local = localStorage.getItem(`ssat_daily_${key}`);
+        if (local) {
+            try { return JSON.parse(local); } catch { return null; }
+        }
+
+        return null;
+    },
+
+    async saveDailyProgress(progress: DailyProgress): Promise<void> {
+        const username = getSession();
+        if (!username || username.startsWith('guest_')) return;
+
+        const key = `${username.toLowerCase()}_${progress.date}`;
+
+        // Save to IndexedDB
+        try {
+            await dbPut(STORES.DAILY_PROGRESS, { key, ...progress });
+        } catch (e) {
+            // IndexedDB might not have the store yet
+        }
+
+        // Save to localStorage
+        localStorage.setItem(`ssat_daily_${key}`, JSON.stringify(progress));
+    },
+
+    async getAllDailyProgress(): Promise<DailyProgress[]> {
+        const username = getSession();
+        if (!username) return [];
+
+        const normalized = username.toLowerCase();
+        const results: DailyProgress[] = [];
+
+        // Try IndexedDB
+        try {
+            const db = await openDatabase();
+            const tx = db.transaction(STORES.DAILY_PROGRESS, 'readonly');
+            const store = tx.objectStore(STORES.DAILY_PROGRESS);
+            const allRecords = await new Promise<any[]>((resolve, reject) => {
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+            tx.oncomplete = () => db.close();
+
+            for (const record of allRecords) {
+                if (record.key && record.key.startsWith(normalized + '_')) {
+                    const { key: _k, ...progress } = record;
+                    results.push(progress);
+                }
+            }
+            if (results.length > 0) return results;
+        } catch (e) {
+            // Fallback below
+        }
+
+        // Fallback: scan localStorage
+        const prefix = `ssat_daily_${normalized}_`;
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith(prefix)) {
+                try {
+                    results.push(JSON.parse(localStorage.getItem(k)!));
+                } catch { /* skip */ }
+            }
+        }
+        return results;
+    },
 };

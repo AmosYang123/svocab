@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { ArrowUpRight, ArrowDownRight, Award, Brain, Bookmark, BookOpen } from 'lucide-react';
 
 interface StatsDashboardProps {
   stats: {
@@ -14,32 +15,86 @@ interface StatsDashboardProps {
 }
 
 const StatsDashboard: React.FC<StatsDashboardProps> = memo(({ stats, onMasteredClick, onReviewClick, onMarkedClick }) => {
+  const masteredPct = stats.total > 0 ? Math.round((stats.mastered / stats.total) * 100) : 0;
+  const reviewPct = stats.total > 0 ? Math.round((stats.review / stats.total) * 100) : 0;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+      {/* Card 1: Mastered */}
       <button
         onClick={onMasteredClick}
-        className={`bg-white dark:bg-slate-800 py-2 px-6 rounded-lg shadow-sm border border-green-200 dark:border-green-800 flex items-center justify-between transition-all ${stats.mastered > 0 ? 'hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer active:scale-[0.98]' : 'opacity-80'}`}
+        className="bg-muted/30 hover:bg-muted/60 border border-border/80 rounded-xl md:rounded-2xl p-4 flex flex-col justify-between text-left transition-all group active:scale-[0.99]"
       >
-        <div className="text-[9px] font-black text-green-800 dark:text-green-300 tracking-[0.1em] uppercase">Mastered</div>
-        <div className="text-xl font-black text-green-600 dark:text-green-400 leading-none">{stats.mastered}</div>
+        <div className="flex items-center justify-between w-full mb-2">
+          <span className="text-xs font-medium text-muted-foreground">Mastered Words</span>
+          <span className="flex items-center text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <ArrowUpRight className="w-3 h-3 mr-0.5" />
+            {masteredPct}%
+          </span>
+        </div>
+        <div className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">
+          {stats.mastered.toLocaleString()}
+        </div>
+        <div className="text-[11px] text-muted-foreground font-medium truncate">
+          Fully memorized & retained
+        </div>
       </button>
+
+      {/* Card 2: Review Needed */}
       <button
         onClick={onReviewClick}
-        className={`bg-white dark:bg-slate-800 py-2 px-6 rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 flex items-center justify-between transition-all ${stats.review > 0 ? 'hover:bg-orange-50 dark:hover:bg-orange-900/20 cursor-pointer active:scale-[0.98]' : 'opacity-80'}`}
+        className="bg-muted/30 hover:bg-muted/60 border border-border/80 rounded-xl md:rounded-2xl p-4 flex flex-col justify-between text-left transition-all group active:scale-[0.99]"
       >
-        <div className="text-[9px] font-black text-orange-800 dark:text-orange-300 tracking-[0.1em] uppercase">Review</div>
-        <div className="text-xl font-black text-orange-600 dark:text-orange-400 leading-none">{stats.review}</div>
+        <div className="flex items-center justify-between w-full mb-2">
+          <span className="text-xs font-medium text-muted-foreground">Review Needed</span>
+          <span className="flex items-center text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <Brain className="w-3 h-3 mr-0.5" />
+            {reviewPct}%
+          </span>
+        </div>
+        <div className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">
+          {stats.review.toLocaleString()}
+        </div>
+        <div className="text-[11px] text-muted-foreground font-medium truncate">
+          Requires active drill
+        </div>
       </button>
+
+      {/* Card 3: Marked Bookmarks */}
       <button
         onClick={onMarkedClick}
-        className={`bg-white dark:bg-slate-800 py-2 px-6 rounded-lg shadow-sm border border-yellow-200 dark:border-yellow-800 flex items-center justify-between transition-all ${stats.marked > 0 ? 'hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer active:scale-[0.98]' : 'opacity-80'}`}
+        className="bg-muted/30 hover:bg-muted/60 border border-border/80 rounded-xl md:rounded-2xl p-4 flex flex-col justify-between text-left transition-all group active:scale-[0.99]"
       >
-        <div className="text-[9px] font-black text-yellow-800 dark:text-yellow-300 tracking-[0.1em] uppercase">Marked</div>
-        <div className="text-xl font-black text-yellow-700 dark:text-yellow-400 leading-none">{stats.marked}</div>
+        <div className="flex items-center justify-between w-full mb-2">
+          <span className="text-xs font-medium text-muted-foreground">Marked Words</span>
+          <span className="flex items-center text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            <Bookmark className="w-3 h-3 mr-0.5 fill-current" />
+            Saved
+          </span>
+        </div>
+        <div className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">
+          {stats.marked.toLocaleString()}
+        </div>
+        <div className="text-[11px] text-muted-foreground font-medium truncate">
+          Starred for high priority
+        </div>
       </button>
-      <div className="bg-white dark:bg-slate-800 py-2 px-6 rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 flex items-center justify-between">
-        <div className="text-[9px] font-black text-blue-800 dark:text-blue-300 tracking-[0.1em] uppercase">New</div>
-        <div className="text-xl font-black text-blue-500 dark:text-blue-400 leading-none">{stats.notStudied}</div>
+
+      {/* Card 4: Total & Unstudied */}
+      <div className="bg-muted/30 border border-border/80 rounded-xl md:rounded-2xl p-4 flex flex-col justify-between text-left">
+        <div className="flex items-center justify-between w-full mb-2">
+          <span className="text-xs font-medium text-muted-foreground">New / Unstudied</span>
+          <span className="flex items-center text-[10px] font-mono px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+            <BookOpen className="w-3 h-3 mr-0.5" />
+            Deck
+          </span>
+        </div>
+        <div className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">
+          {stats.notStudied.toLocaleString()}
+        </div>
+        <div className="text-[11px] text-muted-foreground font-medium truncate">
+          Total deck size: {stats.total.toLocaleString()}
+        </div>
       </div>
     </div>
   );

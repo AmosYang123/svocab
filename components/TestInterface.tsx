@@ -206,18 +206,18 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
   const progressPercent = (answeredCount / currentTestList.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-violet-50/50 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-6">
 
         {/* Sticky Header */}
-        <div className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-lg shadow-indigo-100/50 dark:shadow-none border border-white/50 dark:border-slate-700 mb-6 overflow-hidden">
+        <div className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl rounded-xl shadow-xs border border-border mb-6 overflow-hidden">
           <div className="px-6 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+                <h1 className="text-xl font-bold text-foreground tracking-tight">
                   {cycleNumber > 1 ? `Round ${cycleNumber}` : 'Vocabulary Test'}
                 </h1>
-                <p className="text-sm text-slate-400 mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   {testType === 'multiple-choice' ? 'Multiple Choice' : 'Type Answer'} • {currentTestList.length} questions
                 </p>
               </div>
@@ -230,7 +230,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                 )}
                 <button
                   onClick={onCancel}
-                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                 >
                   <Icons.Close />
                 </button>
@@ -240,13 +240,13 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
             {/* Progress Bar */}
             {!submitted && (
               <div className="mt-4">
-                <div className="flex justify-between text-xs text-slate-400 mb-1.5">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-mono">
                   <span>{answeredCount} of {currentTestList.length} answered</span>
                   <span>{Math.round(progressPercent)}%</span>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500 ease-out"
+                    className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -257,7 +257,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
 
         {/* Results Card */}
         {submitted && results && (
-          <div className="bg-white rounded-2xl shadow-lg shadow-indigo-100/50 border border-slate-100 mb-6 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="bg-card rounded-xl shadow-xs border border-border mb-6 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="p-8 text-center">
               {/* Score Circle */}
               <div className="relative inline-flex items-center justify-center mb-6">
@@ -280,8 +280,8 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                 </div>
               </div>
 
-              <p className="text-slate-500 text-sm mb-6">
-                You got <span className="font-semibold text-slate-700">{results.correct}</span> out of <span className="font-semibold text-slate-700">{results.total}</span> correct
+              <p className="text-muted-foreground text-sm mb-6">
+                You got <span className="font-semibold text-foreground">{results.correct}</span> out of <span className="font-semibold text-foreground">{results.total}</span> correct
               </p>
 
               {/* Stats Pills */}
@@ -291,7 +291,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                   <span className="text-sm font-medium">{results.mastered.length} Mastered</span>
                 </div>
                 {Object.values(aiResults).filter(v => v === true).length > 0 && (
-                  <div className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl shadow-md">
+                  <div className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl shadow-xs">
                     <Icons.Brain />
                     <span className="text-sm font-medium">{Object.values(aiResults).filter(v => v === true).length} AI Validated</span>
                   </div>
@@ -321,7 +321,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                 {results.missed.length > 0 && (
                   <button
                     onClick={handleContinueLearning}
-                    className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all active:scale-[0.98] shadow-lg shadow-indigo-200"
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-xl font-medium transition-all active:scale-[0.98] shadow-xs"
                   >
                     <Icons.Brain />
                     Continue Learning
@@ -339,8 +339,8 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                 <button
                   onClick={onCancel}
                   className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all active:scale-[0.98] ${results.missed.length === 0
-                    ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    ? 'flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                    : 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
                     }`}
                 >
                   {results.missed.length === 0 ? 'Complete' : 'Finish'}
@@ -362,28 +362,28 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
             return (
               <div
                 key={`${cycleNumber}-${idx}`}
-                className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${submitted
+                className={`bg-card rounded-xl border transition-all duration-300 overflow-hidden ${submitted
                   ? isCorrect
-                    ? 'border-emerald-200 shadow-lg shadow-emerald-100/50'
-                    : 'border-red-200 shadow-lg shadow-red-100/50'
+                    ? 'border-emerald-500/30 shadow-xs'
+                    : 'border-destructive/30 shadow-xs'
                   : isAnswered
-                    ? 'border-indigo-200 dark:border-indigo-700 shadow-lg shadow-indigo-100/50 dark:shadow-none'
-                    : 'border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-slate-200 dark:hover:border-slate-600'
+                    ? 'border-primary/50 shadow-xs'
+                    : 'border-border shadow-xs hover:border-primary/30'
                   }`}
               >
                 {/* Question Header */}
                 <div className={`px-5 py-4 flex items-center justify-between ${submitted
-                  ? isCorrect ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : 'bg-red-50/50 dark:bg-red-900/10'
-                  : isAnswered ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'bg-slate-50/50 dark:bg-slate-800/50'
+                  ? isCorrect ? 'bg-emerald-500/10' : 'bg-destructive/10'
+                  : isAnswered ? 'bg-primary/5' : 'bg-muted/50'
                   }`}>
                   <div className="flex items-center gap-3">
                     <span className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold ${submitted
-                      ? isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                      : isAnswered ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      ? isCorrect ? 'bg-emerald-500/20 text-emerald-600' : 'bg-destructive/20 text-destructive'
+                      : isAnswered ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
                       }`}>
                       {idx + 1}
                     </span>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 tracking-tight">{word.name}</h3>
+                    <h3 className="text-lg font-bold text-foreground tracking-tight">{word.name}</h3>
                     {wordStatuses[word.name] && (
                       <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${wordStatuses[word.name] === 'mastered'
                         ? 'bg-emerald-100 text-emerald-600'
@@ -399,8 +399,8 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                       <button
                         onClick={() => toggleKeepInPool(idx)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${keepInPool[idx]
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
                           }`}
                       >
                         <Icons.Book />
@@ -411,7 +411,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                       onClick={() => toggleLocalMark(idx, word.name)}
                       className={`p-2 rounded-lg transition-all ${isMarked
                         ? 'bg-orange-500 text-white'
-                        : 'bg-slate-100 text-slate-300 hover:text-orange-500 hover:bg-orange-50'
+                        : 'bg-muted text-muted-foreground/60 hover:text-orange-500 hover:bg-orange-500/10'
                         }`}
                     >
                       <Icons.Flag />
@@ -432,26 +432,26 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                             key={oIdx}
                             disabled={submitted}
                             onClick={() => setAnswers(prev => ({ ...prev, [idx]: opt }))}
-                            className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3 ${submitted
+                            className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3 ${submitted
                               ? isActualCorrect
-                                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
                                 : isSelected
-                                  ? 'bg-red-50 border-red-300 text-red-800'
-                                  : 'bg-slate-50 border-slate-100 text-slate-400'
+                                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
+                                  : 'bg-muted/40 border-border text-muted-foreground'
                               : isSelected
-                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-400 dark:border-indigo-600 text-indigo-900 dark:text-indigo-100'
-                                : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10'
+                                ? 'bg-primary/10 border-primary/40 text-foreground'
+                                : 'bg-card border-border text-foreground hover:border-primary/30 hover:bg-muted/50'
                               }`}
                           >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${submitted
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${submitted
                               ? isActualCorrect
                                 ? 'border-emerald-500 bg-emerald-500'
                                 : isSelected
-                                  ? 'border-red-500 bg-red-500'
-                                  : 'border-slate-200'
+                                  ? 'border-destructive bg-destructive'
+                                  : 'border-border'
                               : isSelected
-                                ? 'border-indigo-500 bg-indigo-500'
-                                : 'border-slate-300'
+                                ? 'border-primary bg-primary'
+                                : 'border-border'
                               }`}>
                               {(isSelected || (submitted && isActualCorrect)) && (
                                 <div className="w-2 h-2 bg-white rounded-full" />
@@ -468,19 +468,19 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                         disabled={submitted}
                         type="text"
                         placeholder="Type the definition..."
-                        className={`w-full py-3.5 px-5 rounded-xl border-2 outline-none transition-all text-sm ${submitted
+                        className={`w-full py-3.5 px-5 rounded-xl border outline-none transition-all text-sm ${submitted
                           ? isCorrect
-                            ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                            : 'bg-red-50 border-red-300 text-red-800'
-                          : 'bg-white border-slate-200 text-slate-800 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 placeholder:text-slate-400'
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600'
+                            : 'bg-destructive/10 border-destructive/30 text-destructive'
+                          : 'bg-card border-input text-foreground focus:border-ring focus:ring-2 focus:ring-ring/20 placeholder:text-muted-foreground/60'
                           }`}
                         value={userAns}
                         onChange={(e) => setAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                       />
                       {submitted && !isCorrect && (
-                        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4">
-                          <span className="text-xs text-slate-400 font-medium uppercase tracking-wide">Correct answer</span>
-                          <p className="text-slate-700 mt-1">{strippedActual}</p>
+                        <div className="bg-muted border border-border rounded-xl p-4">
+                          <span className="text-xs text-muted-foreground font-mono uppercase tracking-wide">Correct answer</span>
+                          <p className="text-foreground mt-1 font-medium">{strippedActual}</p>
                         </div>
                       )}
                     </div>
@@ -500,7 +500,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                             <div className="flex items-center gap-2">
                               {keepInPool[idx] ? 'Correct — Kept in study pool' : 'Correct — Marked as mastered'}
                               {aiResults[idx] === true && (
-                                <div className="flex items-center gap-1 bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shadow-sm">
+                                <div className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider shadow-xs">
                                   <Icons.Brain />
                                   AI Validated
                                 </div>
@@ -516,7 +516,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                             </div>
                             Incorrect — Added to review list
                             {aiResults[idx] === false && (
-                              <div className="flex items-center gap-1 bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ml-2">
+                              <div className="flex items-center gap-1 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ml-2">
                                 <Icons.Brain />
                                 AI Verified
                               </div>
@@ -530,8 +530,8 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
                           [idx]: !isCorrect
                         }))}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${overrides[idx] !== undefined
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-100 text-slate-500 hover:bg-amber-50 hover:text-amber-600'
+                          ? 'bg-amber-500/20 text-amber-600'
+                          : 'bg-muted text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600'
                           }`}
                         title="Override: click to mark as correct/incorrect"
                       >
@@ -554,7 +554,7 @@ const TestInterface: React.FC<TestInterfaceProps> = ({
             <button
               onClick={handleSubmit}
               disabled={answeredCount === 0 || isEvaluating}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-semibold text-base transition-all active:scale-[0.99] shadow-xl shadow-indigo-200/50 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-primary-foreground rounded-xl font-semibold text-base transition-all active:scale-[0.98] shadow-xs flex items-center justify-center gap-2"
             >
               {isEvaluating ? (
                 <>

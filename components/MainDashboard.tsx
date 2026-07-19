@@ -137,40 +137,25 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
     onUpgrade
 }) => {
     return (
-        <div className="max-w-5xl mx-auto px-6 py-4 md:py-6 min-h-screen flex flex-col">
-            <header className="mb-4 text-center relative">
-                <h1 className="text-2xl md:text-3xl font-black text-indigo-900 mb-0 tracking-tighter italic">SSAT Mastery</h1>
-                <div className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
-                    {activeSetId
-                        ? <span>Current: <span className="text-indigo-600">"{savedSets.find(s => s.id === activeSetId)?.name}"</span></span>
-                        : <span>Mode: <span className="text-indigo-600">{studyMode}</span> • {studyList.length} words</span>
-                    }
+        <div className="max-w-6xl mx-auto w-full flex flex-col font-sans">
+            {/* Top Breadcrumb & Deck Toggle Bar (Matches Reference Image Header Bar) */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-border/60">
+                <div>
+                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                        <Icons.AcademicCap className="w-5 h-5 text-primary" />
+                        Vocabulary Overview
+                    </h1>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                        {activeSetId
+                            ? <span>Active Group: <span className="text-foreground font-semibold">"{savedSets.find(s => s.id === activeSetId)?.name}"</span></span>
+                            : <span>Active Deck: <span className="text-foreground font-semibold">{showSatVocab && showDefaultVocab ? 'All Combined' : showSatVocab ? 'SAT (3,000)' : 'SSAT (1,000)'}</span> • {studyList.length.toLocaleString()} words</span>
+                        }
+                    </p>
                 </div>
-                <div className="absolute right-0 top-0 flex items-center gap-2">
-                    <button
-                        onClick={() => onUpdatePreferences(theme === 'light' ? 'dark' : 'light', showDefaultVocab, showSatVocab)}
-                        className="p-2 hover:bg-indigo-50 rounded-lg transition-colors text-gray-400 hover:text-indigo-600"
-                        title={`Theme: ${theme}`}
-                    >
-                        {theme === 'dark' ? <Icons.Moon /> : <Icons.Sun />}
-                    </button>
-                    <button
-                        onClick={onShowSettings}
-                        className="p-2 hover:bg-indigo-50 rounded-lg transition-colors text-gray-400 hover:text-indigo-600"
-                        title="Settings"
-                    >
-                        <Icons.Settings />
-                    </button>
-                    {/* <button
-                        onClick={() => setShowPayment(true)}
-                        className={`p-2 rounded-lg transition-colors shadow-sm ${isPro ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 cursor-pointer' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                        title={isPro ? "Manage Subscription" : "Upgrade to Pro"}
-                    >
-                        {isPro ? <Icons.Lightning className="w-5 h-5 text-amber-500" /> : <Icons.Lightning className="w-5 h-5 text-yellow-300" />}
-                    </button> */}
-                </div>
-            </header>
 
+            </div>
+
+            {/* 4-Card Metric Grid (Matches Reference Image) */}
             <StatsDashboard
                 stats={currentStats}
                 onMasteredClick={onMasteredClick}
@@ -178,7 +163,7 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                 onMarkedClick={onMarkedClick}
             />
 
-            <div className="my-2">
+            <div className="mb-4">
                 <ModeSelector
                     currentMode={studyMode}
                     activeSetId={activeSetId}
@@ -193,22 +178,22 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                 />
             </div>
 
+            {/* Main Action Bar */}
             <div className="flex flex-wrap items-center justify-center gap-3 my-4">
-                <button onClick={onShuffle} className="flex items-center gap-2 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-slate-700 px-6 py-1.5 rounded-lg font-black hover:bg-indigo-50 dark:hover:bg-slate-700 transition-all text-[11px] active:scale-95 shadow-sm uppercase tracking-[0.1em]">
-                    <Icons.Shuffle /> Shuffle
+                <button onClick={onShuffle} className="flex items-center gap-2 bg-secondary text-secondary-foreground border border-border/80 px-5 py-2.5 font-medium hover:bg-muted transition-all text-xs rounded-xl shadow-xs active:scale-[0.98]">
+                    <Icons.Shuffle className="w-4 h-4 text-muted-foreground" /> Shuffle Order
                 </button>
                 <button
                     onClick={() => { if (studyList.length > 0) navigate('/learn'); }}
-                    className="flex items-center gap-2 bg-emerald-500 text-white px-8 py-1.5 rounded-lg font-black hover:bg-emerald-600 transition-all text-[11px] shadow-lg active:scale-95 uppercase tracking-[0.2em]"
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 font-semibold hover:opacity-90 transition-all text-xs rounded-xl shadow-sm active:scale-[0.98]"
                 >
-                    <Icons.AcademicCap /> Learn Mode
+                    <Icons.AcademicCap className="w-4 h-4" /> Learn Mode
                 </button>
                 <button
                     onClick={() => { if (studyList.length > 0) onShowTestOptions(); }}
-
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-1.5 rounded-lg font-black hover:bg-indigo-700 transition-all text-[11px] shadow-lg active:scale-95 uppercase tracking-[0.2em]"
+                    className="flex items-center gap-2 bg-foreground text-background px-6 py-2.5 font-semibold hover:opacity-90 transition-all text-xs rounded-xl shadow-sm active:scale-[0.98]"
                 >
-                    <Icons.ClipboardCheck /> Test Me
+                    <Icons.ClipboardCheck className="w-4 h-4" /> Test Me
                 </button>
             </div>
 
@@ -224,7 +209,7 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                         {!showJumpSearch ? (
                             <button
                                 onClick={() => onSetShowJumpSearch(true)}
-                                className="text-indigo-500 dark:text-indigo-400 font-black text-[10px] flex items-center gap-2 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors uppercase tracking-[0.4em] bg-white dark:bg-slate-800 px-8 py-1.5 rounded-full shadow-md border border-indigo-100 dark:border-slate-700"
+                                className="text-primary font-semibold text-[10px] flex items-center gap-2 hover:text-primary/80 transition-colors uppercase tracking-[0.4em] bg-card px-8 py-1.5 rounded-full shadow-xs border border-border"
                             >
                                 <Icons.Search /> QUICK JUMP
                             </button>
@@ -257,14 +242,14 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                             <button
                                 disabled={currentIndex === 0}
                                 onClick={() => { onSetCurrentIndex(currentIndex - 1); }}
-                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-10 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 rounded-lg font-black text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-30 transition-all active:scale-95 text-[11px] shadow-sm uppercase tracking-[0.2em]"
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-10 bg-card border border-border rounded-lg font-semibold text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 transition-all active:scale-[0.98] text-xs shadow-xs uppercase tracking-[0.2em]"
                             >
                                 <Icons.ChevronLeft /> Prev
                             </button>
                             <button
                                 disabled={currentIndex === studyList.length - 1}
                                 onClick={() => { onSetCurrentIndex(currentIndex + 1); }}
-                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-10 bg-white dark:bg-slate-800 border-2 border-gray-100 dark:border-slate-700 rounded-lg font-black text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-30 transition-all active:scale-95 text-[11px] shadow-sm uppercase tracking-[0.2em]"
+                                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-10 bg-card border border-border rounded-lg font-semibold text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 transition-all active:scale-[0.98] text-xs shadow-xs uppercase tracking-[0.2em]"
                             >
                                 Next <Icons.ChevronRight />
                             </button>
@@ -291,28 +276,28 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                     </div>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-slate-800 py-12 px-12 rounded-lg shadow-lg border border-indigo-50 dark:border-slate-700 text-center">
-                    <p className="text-gray-400 dark:text-gray-500 text-2xl font-black mb-8 uppercase tracking-widest italic opacity-50">List is Empty</p>
-                    <button onClick={() => onModeChange('all')} className="bg-indigo-600 text-white px-16 py-3 rounded-lg text-[12px] font-black hover:bg-indigo-700 transition-all shadow-xl active:scale-95 uppercase tracking-[0.3em]">Reset Study Mode</button>
+                <div className="bg-card py-12 px-12 rounded-xl shadow-xs border border-border text-center">
+                    <p className="text-muted-foreground text-2xl font-bold mb-8 uppercase tracking-widest italic opacity-50">List is Empty</p>
+                    <button onClick={() => onModeChange('all')} className="bg-primary text-primary-foreground px-16 py-3 rounded-xl text-xs font-semibold hover:bg-primary/90 transition-all shadow-xs active:scale-[0.98] uppercase tracking-[0.3em]">Reset Study Mode</button>
                 </div>
             )}
 
-            <footer className="mt-auto py-4 border-t border-indigo-100/30 flex justify-between items-center px-2">
+            <footer className="mt-auto py-4 border-t border-border flex justify-between items-center px-2">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-[8px] font-black text-gray-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
                         <div className={`w-1.5 h-1.5 rounded-full ${storageMode === 'cloud' || storageMode === 'hybrid'
                             ? 'bg-blue-500 shadow-blue-200 shadow-sm'
-                            : 'bg-green-500'
+                            : 'bg-emerald-500'
                             }`}></div>
                         {storageMode === 'cloud' || storageMode === 'hybrid' ? 'Cloud Sync Active' : 'All progress saved locally'}
                     </div>
-                    <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest opacity-40 italic">
+                    <span className="text-[10px] font-mono text-primary uppercase tracking-widest opacity-60 italic">
                         {currentUser}
                     </span>
                 </div>
                 <button
                     onClick={() => setShowSettings(true)}
-                    className="text-[8px] font-black text-gray-300 hover:text-indigo-400 uppercase tracking-widest transition-colors"
+                    className="text-[10px] font-mono text-muted-foreground hover:text-foreground uppercase tracking-widest transition-colors"
                 >
                     Settings
                 </button>
@@ -333,19 +318,19 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
             )}
 
             {showTestOptions && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-indigo-900/60 p-6 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-2xl text-center border-t-8 border-indigo-600">
-                        <h2 className="text-2xl font-black text-indigo-900 mb-8 uppercase tracking-tight italic">Prepare for Testing</h2>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 p-6 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="bg-card rounded-xl p-8 w-full max-w-md shadow-sm text-center border-t-4 border-primary border-x border-b border-border">
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground mb-8 uppercase italic">Prepare for Testing</h2>
                         <div className="space-y-4">
-                            <button onClick={() => { setTestType('multiple-choice'); navigate('/mtest'); setShowTestOptions(false); }} className="w-full text-left py-3 px-10 border-2 border-indigo-50 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all group active:scale-[0.98] shadow-sm">
-                                <div className="text-sm font-black text-indigo-700 uppercase tracking-widest">Active Recognition</div>
-                                <div className="text-[10px] text-gray-400 font-black uppercase opacity-60">Pick the correct definition</div>
+                            <button onClick={() => { setTestType('multiple-choice'); navigate('/mtest'); setShowTestOptions(false); }} className="w-full text-left py-3 px-6 border border-border rounded-xl hover:border-primary hover:bg-muted transition-all group active:scale-[0.98] shadow-xs">
+                                <div className="text-sm font-semibold text-primary uppercase tracking-widest">Active Recognition</div>
+                                <div className="text-[10px] text-muted-foreground font-mono uppercase">Pick the correct definition</div>
                             </button>
-                            <button onClick={() => { setTestType('type-in'); navigate('/wtest'); setShowTestOptions(false); }} className="w-full text-left py-3 px-10 border-2 border-indigo-50 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all group active:scale-[0.98] shadow-sm">
-                                <div className="text-sm font-black text-indigo-700 uppercase tracking-widest">Deep Recall</div>
-                                <div className="text-[10px] text-gray-400 font-black uppercase opacity-60">Type out the meaning</div>
+                            <button onClick={() => { setTestType('type-in'); navigate('/wtest'); setShowTestOptions(false); }} className="w-full text-left py-3 px-6 border border-border rounded-xl hover:border-primary hover:bg-muted transition-all group active:scale-[0.98] shadow-xs">
+                                <div className="text-sm font-semibold text-primary uppercase tracking-widest">Deep Recall</div>
+                                <div className="text-[10px] text-muted-foreground font-mono uppercase">Type out the meaning</div>
                             </button>
-                            <button onClick={() => setShowTestOptions(false)} className="mt-6 text-gray-400 font-black hover:text-gray-600 uppercase tracking-[0.5em] text-[10px] bg-gray-50 px-16 py-2 rounded-full border-2 border-gray-100 shadow-inner">Cancel</button>
+                            <button onClick={() => setShowTestOptions(false)} className="mt-6 text-muted-foreground font-semibold hover:text-foreground uppercase tracking-[0.3em] text-xs bg-muted px-12 py-2 rounded-xl border border-border shadow-xs">Cancel</button>
                         </div>
                     </div>
                 </div>

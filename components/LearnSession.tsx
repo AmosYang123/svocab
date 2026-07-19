@@ -149,15 +149,15 @@ const WarmupView: React.FC<{
             {/* Header */}
             <div className="text-center mb-4 w-full">
                 <div className="flex items-center justify-center gap-4 mb-3">
-                    <div className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em]">
+                    <div className="text-xs font-mono text-primary uppercase tracking-[0.3em]">
                         Group {groupIndex + 1} of {totalGroups}
                     </div>
                     <div className={`px-3 py-1 rounded-full text-xs font-bold ${timeLeft > 30 ? 'bg-emerald-100 text-emerald-700' : timeLeft > 10 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                         {formatTime(timeLeft)}
                     </div>
                 </div>
-                <h2 className="text-2xl font-black text-slate-800 mb-1">Warm Up</h2>
-                <p className="text-sm text-slate-500">
+                <h2 className="text-2xl font-bold text-foreground mb-1">Warm Up</h2>
+                <p className="text-sm text-muted-foreground">
                     Preview these {group.length} words
                 </p>
             </div>
@@ -165,14 +165,14 @@ const WarmupView: React.FC<{
             {/* Progress */}
             <div className="w-full mb-6">
                 <div className="flex items-center gap-3">
-                    <span className="text-xs font-black text-slate-400">{index + 1}</span>
-                    <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <span className="text-xs font-semibold text-muted-foreground">{index + 1}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                            className="h-full bg-primary transition-all duration-300"
                             style={{ width: `${((index + 1) / group.length) * 100}%` }}
                         />
                     </div>
-                    <span className="text-xs font-black text-slate-400">{group.length}</span>
+                    <span className="text-xs font-semibold text-muted-foreground">{group.length}</span>
                 </div>
             </div>
 
@@ -191,21 +191,21 @@ const WarmupView: React.FC<{
                 <button
                     onClick={handlePrev}
                     disabled={index === 0}
-                    className={`p-3 rounded-xl border-2 transition-all ${index === 0 ? 'border-slate-100 text-slate-300' : 'border-slate-200 text-slate-600 hover:border-indigo-300 active:scale-95'}`}
+                    className={`p-3 rounded-xl border-2 transition-all ${index === 0 ? 'border-border text-muted-foreground/40' : 'border-border text-muted-foreground hover:border-primary/50 active:scale-[0.98]'}`}
                 >
                     <Icons.ChevronLeft />
                 </button>
 
                 <button
                     onClick={handleToggle}
-                    className="flex-1 max-w-xs bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:border-indigo-300 transition-all active:scale-95"
+                    className="flex-1 max-w-xs bg-card border-2 border-border text-foreground py-3 rounded-xl font-semibold uppercase tracking-widest text-xs hover:border-primary/50 transition-all active:scale-[0.98]"
                 >
                     {showDef ? 'Hide' : 'Show'} Definition
                 </button>
 
                 <button
                     onClick={handleNext}
-                    className="p-3 rounded-xl border-2 border-indigo-500 bg-indigo-600 text-white hover:bg-indigo-700 transition-all active:scale-95"
+                    className="p-3 rounded-xl border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-[0.98]"
                 >
                     <Icons.ChevronRight />
                 </button>
@@ -213,14 +213,14 @@ const WarmupView: React.FC<{
 
             <button
                 onClick={onComplete}
-                className="mt-6 text-xs font-bold text-slate-400 hover:text-indigo-600 uppercase tracking-widest"
+                className="mt-6 text-xs font-semibold text-muted-foreground hover:text-primary uppercase tracking-widest"
             >
                 Skip to Quiz →
             </button>
 
-            <div className="mt-6 text-[10px] text-slate-400 text-center">
-                <kbd className="px-1.5 py-0.5 bg-slate-100 rounded mr-1">Space</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-100 rounded mx-1">Enter</kbd> = Flip &nbsp;|&nbsp;
-                <kbd className="px-1.5 py-0.5 bg-slate-100 rounded mr-1">←</kbd><kbd className="px-1.5 py-0.5 bg-slate-100 rounded">→</kbd> = Navigate
+            <div className="mt-6 text-[10px] text-muted-foreground text-center">
+                <kbd className="px-1.5 py-0.5 bg-muted rounded mr-1">Space</kbd> or <kbd className="px-1.5 py-0.5 bg-muted rounded mx-1">Enter</kbd> = Flip &nbsp;|&nbsp;
+                <kbd className="px-1.5 py-0.5 bg-muted rounded mr-1">←</kbd><kbd className="px-1.5 py-0.5 bg-muted rounded">→</kbd> = Navigate
             </div>
         </div>
     );
@@ -377,7 +377,7 @@ const QuizView: React.FC<{
             {/* Header */}
             <div className="text-center mb-4 w-full">
                 <div className="flex items-center justify-center gap-4 mb-2">
-                    <div className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em]">
+                    <div className="text-xs font-mono text-primary uppercase tracking-[0.3em]">
                         Group {groupIndex + 1} of {totalGroups}
                     </div>
                     {getTimeLimit() > 0 && feedbackState === 'none' && (
@@ -386,25 +386,25 @@ const QuizView: React.FC<{
                         </div>
                     )}
                 </div>
-                <h2 className="text-xl font-black text-slate-800 mb-1">{phaseNames[phase]}</h2>
-                <div className="text-xs text-slate-400">
+                <h2 className="text-xl font-bold text-foreground mb-1">{phaseNames[phase]}</h2>
+                <div className="text-xs text-muted-foreground">
                     {currentIndex + 1} of {queue.length}
                 </div>
             </div>
 
             {/* Progress */}
             <div className="w-full mb-6">
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                        className="h-full bg-primary transition-all duration-300"
                         style={{ width: `${((currentIndex + 1) / queue.length) * 100}%` }}
                     />
                 </div>
             </div>
 
             {/* Word */}
-            <div className="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 p-8 mb-6">
-                <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 text-center">
+            <div className="w-full bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
+                <h3 className="text-3xl font-bold text-foreground text-center">
                     {currentWord.name}
                 </h3>
             </div>
@@ -416,19 +416,19 @@ const QuizView: React.FC<{
                     const isCorrect = opt === cleanDef(currentWord.definition);
                     const showResult = feedbackState !== 'none' && !hideIndividualFeedback;
 
-                    let bgClass = 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700';
-                    if (showResult && isCorrect) bgClass = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-800';
-                    else if (showResult && isSelected) bgClass = 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800';
-                    else if (isSelected) bgClass = 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-800';
+                    let bgClass = 'bg-card hover:bg-muted border-border';
+                    if (showResult && isCorrect) bgClass = 'bg-emerald-500/10 border-emerald-500/30';
+                    else if (showResult && isSelected) bgClass = 'bg-red-500/10 border-red-500/30';
+                    else if (isSelected) bgClass = 'bg-primary/10 border-primary/30';
 
                     return (
                         <button
                             key={i}
                             onClick={() => handleSelect(opt)}
                             disabled={feedbackState !== 'none'}
-                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${bgClass}`}
+                            className={`w-full text-left p-4 rounded-xl border transition-all ${bgClass}`}
                         >
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt}</span>
+                            <span className="text-sm font-medium text-foreground">{opt}</span>
                         </button>
                     );
                 })}
@@ -436,12 +436,12 @@ const QuizView: React.FC<{
 
             {/* Feedback */}
             {feedbackState !== 'none' && !hideIndividualFeedback && (
-                <div className={`w-full p-4 rounded-xl border ${feedbackState === 'correct' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                <div className={`w-full p-4 rounded-xl border ${feedbackState === 'correct' ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
                     <p className={`text-sm font-bold ${feedbackState === 'correct' ? 'text-emerald-700' : 'text-amber-700'}`}>
                         {getFeedbackMessage()}
                     </p>
                     {feedbackState === 'incorrect' && (
-                        <p className="text-sm text-slate-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             <span className="font-semibold">Answer:</span> {cleanDef(currentWord.definition)}
                         </p>
                     )}
@@ -578,7 +578,7 @@ const WritingTestView: React.FC<{
         <div className="flex flex-col items-center max-w-lg mx-auto w-full px-4">
             <div className="text-center mb-4 w-full">
                 <div className="flex items-center justify-center gap-4 mb-2">
-                    <div className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] mb-2">
+                    <div className="text-xs font-mono text-primary uppercase tracking-[0.3em] mb-2">
                         Group {groupIndex + 1} of {totalGroups}
                     </div>
                     {feedbackState === 'none' && (
@@ -587,21 +587,21 @@ const WritingTestView: React.FC<{
                         </div>
                     )}
                 </div>
-                <h2 className="text-xl font-black text-slate-800 mb-1">{title}</h2>
-                <div className="text-xs text-slate-400">{currentIndex + 1} of {queue.length}</div>
+                <h2 className="text-xl font-bold text-foreground mb-1">{title}</h2>
+                <div className="text-xs text-muted-foreground">{currentIndex + 1} of {queue.length}</div>
             </div>
 
             <div className="w-full mb-6">
-                <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all"
+                        className="h-full bg-primary transition-all"
                         style={{ width: `${((currentIndex + 1) / queue.length) * 100}%` }}
                     />
                 </div>
             </div>
 
-            <div className="w-full bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 p-8 mb-6">
-                <h3 className="text-3xl font-black text-slate-900 dark:text-slate-100 text-center">
+            <div className="w-full bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
+                <h3 className="text-3xl font-bold text-foreground text-center">
                     {currentWord.name}
                 </h3>
             </div>
@@ -612,7 +612,7 @@ const WritingTestView: React.FC<{
                     onChange={(e) => setUserInput(e.target.value)}
                     placeholder="Type the definition or meaning..."
                     disabled={feedbackState !== 'none'}
-                    className="w-full p-4 border-2 border-slate-200 rounded-xl text-sm focus:border-indigo-400 focus:outline-none resize-none bg-white"
+                    className="w-full p-4 border border-input rounded-xl text-sm focus:border-ring focus:outline-none resize-none bg-card"
                     rows={3}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -626,32 +626,32 @@ const WritingTestView: React.FC<{
             <button
                 onClick={handleSubmit}
                 disabled={feedbackState !== 'none' || !userInput.trim()}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs disabled:opacity-50"
+                className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold uppercase tracking-widest text-xs disabled:opacity-50"
             >
                 {feedbackState === 'checking' ? 'Checking...' : 'Submit'}
             </button>
 
             {(feedbackState === 'correct' || feedbackState === 'incorrect') && (
-                <div className={`w-full mt-4 p-5 rounded-xl border-2 ${feedbackState === 'correct' ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'}`}>
+                <div className={`w-full mt-4 p-5 rounded-xl border ${feedbackState === 'correct' ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
                     <div className="flex items-center justify-between mb-2">
                         <p className={`text-lg font-bold ${feedbackState === 'correct' ? 'text-emerald-700' : 'text-amber-700'}`}>
                             {feedbackState === 'correct' ? 'Correct!' : "Not quite. Here's the answer:"}
                         </p>
                         {feedbackState === 'correct' && aiStatus === true && (
-                            <div className="flex items-center gap-1.5 bg-indigo-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in zoom-in duration-300 shadow-md">
+                            <div className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in zoom-in duration-300 shadow-sm">
                                 <Icons.Brain />
                                 <span>AI Validated</span>
                             </div>
                         )}
                         {feedbackState === 'incorrect' && aiStatus === false && (
-                            <div className="flex items-center gap-1.5 bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider animate-in zoom-in duration-300">
+                            <div className="flex items-center gap-1.5 bg-muted text-muted-foreground px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in zoom-in duration-300">
                                 <Icons.Brain />
                                 <span>AI Verified</span>
                             </div>
                         )}
                     </div>
-                    <p className="text-sm text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
-                        <span className="font-semibold text-indigo-600">{currentWord.name}:</span> {correctAnswer}
+                    <p className="text-sm text-foreground bg-card p-3 rounded-lg border border-border">
+                        <span className="font-semibold text-primary">{currentWord.name}:</span> {correctAnswer}
                     </p>
                 </div>
             )}
@@ -673,24 +673,24 @@ const GroupSummary: React.FC<{
         <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
             <Icons.Check />
         </div>
-        <h2 className="text-2xl font-black text-slate-800 mb-2">Group {groupIndex + 1} Complete</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Group {groupIndex + 1} Complete</h2>
 
         <div className="flex flex-wrap justify-center gap-4 my-6">
             <div className="bg-emerald-50 px-6 py-4 rounded-xl border border-emerald-100">
-                <div className="text-2xl font-black text-emerald-600">{masteredCount}</div>
-                <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Mastered</div>
+                <div className="text-2xl font-bold text-emerald-600">{masteredCount}</div>
+                <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Mastered</div>
             </div>
             {deferredCount > 0 && (
                 <div className="bg-amber-50 px-6 py-4 rounded-xl border border-amber-100">
-                    <div className="text-2xl font-black text-amber-600">{deferredCount}</div>
-                    <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Deferred</div>
+                    <div className="text-2xl font-bold text-amber-600">{deferredCount}</div>
+                    <div className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Deferred</div>
                 </div>
             )}
             {aiCount > 0 && (
-                <div className="bg-indigo-600 px-6 py-4 rounded-xl shadow-md border border-indigo-500 text-white flex flex-col items-center justify-center">
+                <div className="bg-primary px-6 py-4 rounded-xl shadow-sm border border-primary/80 text-primary-foreground flex flex-col items-center justify-center">
                     <div className="flex items-center gap-1.5 mb-0.5">
                         <Icons.Brain className="w-4 h-4" />
-                        <div className="text-2xl font-black">{aiCount}</div>
+                        <div className="text-2xl font-bold">{aiCount}</div>
                     </div>
                     <div className="text-[10px] font-bold uppercase tracking-wider opacity-90">AI Validated</div>
                 </div>
@@ -699,7 +699,7 @@ const GroupSummary: React.FC<{
 
         <button
             onClick={onContinue}
-            className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm shadow-lg"
+            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold uppercase tracking-widest text-sm shadow-sm"
         >
             {groupIndex + 1 < totalGroups ? 'Next Group' : 'Final Review'}
         </button>
@@ -715,33 +715,33 @@ const SessionSummary: React.FC<{
     onExit: () => void;
 }> = ({ masteredCount, deferredCount, aiCount, totalWords, onExit }) => (
     <div className="flex flex-col items-center max-md mx-auto text-center py-8 px-4">
-        <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-6">
+        <div className="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
             <Icons.Trophy />
         </div>
-        <h2 className="text-3xl font-black text-slate-800 mb-2">Session Complete</h2>
-        <p className="text-slate-500 mb-8">You studied {totalWords} words</p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Session Complete</h2>
+        <p className="text-muted-foreground mb-8">You studied {totalWords} words</p>
 
         <div className="grid grid-cols-2 gap-4 w-full mb-8">
             <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
-                <div className="text-4xl font-black text-emerald-500 mb-1">{masteredCount}</div>
-                <div className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Mastered</div>
+                <div className="text-4xl font-bold text-emerald-500 mb-1">{masteredCount}</div>
+                <div className="text-xs font-semibold text-emerald-700 uppercase tracking-widest">Mastered</div>
             </div>
             <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100">
-                <div className="text-4xl font-black text-amber-500 mb-1">{deferredCount}</div>
-                <div className="text-xs font-bold text-amber-700 uppercase tracking-widest">Try Later</div>
+                <div className="text-4xl font-bold text-amber-500 mb-1">{deferredCount}</div>
+                <div className="text-xs font-semibold text-amber-700 uppercase tracking-widest">Try Later</div>
             </div>
         </div>
 
         {aiCount > 0 && (
-            <div className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-lg mb-8 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl shadow-sm mb-8 animate-in slide-in-from-bottom-4 duration-500">
                 <Icons.Brain className="w-5 h-5" />
-                <span className="text-sm font-black uppercase tracking-[0.15em]">{aiCount} AI Validated Answers</span>
+                <span className="text-sm font-semibold uppercase tracking-[0.15em]">{aiCount} AI Validated Answers</span>
             </div>
         )}
 
         <button
             onClick={onExit}
-            className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest shadow-xl"
+            className="w-full bg-foreground text-background py-3 rounded-xl font-semibold uppercase tracking-widest shadow-sm"
         >
             Back to Dashboard
         </button>
@@ -971,8 +971,8 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4">
                 <div className="text-center">
-                    <h2 className="text-2xl font-black text-slate-800 mb-4">No Words to Study</h2>
-                    <button onClick={onComplete} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold">
+                    <h2 className="text-2xl font-bold text-foreground mb-4">No Words to Study</h2>
+                    <button onClick={onComplete} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold">
                         Go Back
                     </button>
                 </div>
@@ -981,11 +981,11 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
     }
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 py-8 transition-colors duration-300">
+        <div className="min-h-screen bg-background py-8 transition-colors duration-300">
             <div className="fixed top-4 left-4 z-50">
                 <button
                     onClick={onComplete}
-                    className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 text-xs font-bold uppercase tracking-wider bg-white/80 dark:bg-slate-900/80 backdrop-blur px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-800"
+                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-xs font-semibold uppercase tracking-wider bg-card/80 backdrop-blur px-4 py-2 rounded-full shadow-sm border border-border"
                 >
                     <Icons.ChevronLeft /> Exit
                 </button>

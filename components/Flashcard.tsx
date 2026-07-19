@@ -236,14 +236,14 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
     <div
       ref={cardRef}
       onClick={onToggle}
-      className="flashcard-container group relative w-full max-w-3xl bg-white rounded-xl shadow-xl hover:shadow-2xl border border-indigo-50 min-h-[320px] md:min-h-[400px] flex items-center justify-center p-8 md:p-12 cursor-pointer transition-all duration-300 overflow-hidden"
+      className="flashcard-container group relative w-full max-w-3xl bg-muted/20 border border-border/80 min-h-[320px] md:min-h-[400px] flex items-center justify-center p-8 md:p-12 cursor-pointer transition-all duration-300 rounded-2xl md:rounded-3xl hover:border-border shadow-xs hover:shadow-sm"
     >
       {/* Pronunciation Button - Bottom Right */}
       <button
         onClick={handleSpeak}
-        className={`absolute bottom-6 right-8 z-20 p-2.5 rounded-lg transition-all shadow-sm border ${isSpeaking
-          ? 'bg-indigo-600 text-white border-indigo-600 animate-pulse'
-          : 'bg-white text-indigo-500 border-indigo-100 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200'
+        className={`absolute bottom-6 right-8 z-20 p-2.5 border transition-all rounded-xl ${isSpeaking
+          ? 'bg-primary text-primary-foreground border-primary animate-pulse'
+          : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
           }`}
         title="Play pronunciation"
       >
@@ -253,18 +253,18 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
       {/* Status Badge */}
       <div className="absolute top-6 right-8 z-10">
         {status === 'mastered' ? (
-          <div className="flex items-center gap-1.5 px-6 py-1 bg-green-100 text-green-700 rounded-md text-[11px] font-black shadow-sm border border-green-200 uppercase">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-mono border border-emerald-500/30 uppercase rounded-full">
             <Icons.Trophy />
             MASTERED
           </div>
         ) : status === 'review' ? (
-          <div className="flex items-center gap-1.5 px-6 py-1 bg-orange-100 text-orange-700 rounded-md text-[11px] font-black shadow-sm border border-orange-200 uppercase">
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-mono border border-amber-500/30 uppercase rounded-full">
             <Icons.Brain />
             REVIEW
           </div>
         ) : (
-          <div className="px-6 py-1 bg-gray-50 text-gray-400 rounded-md text-[11px] font-black border border-gray-100 uppercase tracking-tighter">
-            New
+          <div className="px-3 py-1 bg-muted text-muted-foreground text-[10px] font-mono border border-border uppercase rounded-full">
+            NEW
           </div>
         )}
       </div>
@@ -272,36 +272,36 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
       {/* Content */}
       <div className="text-center w-full">
         {!showDefinition ? (
-          <div className="space-y-4 animate-in fade-in duration-500">
+          <div className="space-y-4 animate-in fade-in duration-300">
             <AutoFitText
               text={word.name}
               containerWidth={contentWidth}
-              className="font-black text-indigo-600 tracking-tighter px-4 drop-shadow-md italic"
+              className="font-bold text-foreground tracking-tight px-4"
               maxSize={80}
               minSize={30}
             />
-            <p className="text-indigo-200 font-black uppercase tracking-[0.5em] text-[12px]">Tap to reveal</p>
+            <p className="text-muted-foreground font-mono uppercase tracking-widest text-xs">Click or press Space to reveal definition</p>
           </div>
         ) : (
-          <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+          <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <AutoFitText
               text={word.name}
               containerWidth={contentWidth}
-              className="font-black text-indigo-300 opacity-60 px-4 italic"
-              maxSize={40}
+              className="font-semibold text-muted-foreground opacity-60 px-4"
+              maxSize={36}
               minSize={20}
             />
-            <div className="h-1 w-20 bg-indigo-50 mx-auto rounded-full" />
-            <div className="max-w-2xl mx-auto space-y-6">
-              <p className="text-xl md:text-3xl text-gray-800 font-bold leading-tight px-4">
+            <div className="h-px w-16 bg-border mx-auto" />
+            <div className="max-w-2xl mx-auto space-y-5">
+              <p className="text-xl md:text-2xl text-foreground font-semibold leading-relaxed px-4">
                 {content.main}
               </p>
 
               {content.synonyms && (
-                <div className="flex flex-wrap justify-center gap-2">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest w-full opacity-60 mb-1">Synonyms</span>
+                <div className="flex flex-wrap justify-center gap-2 pt-2">
+                  <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest w-full block mb-1">Synonyms</span>
                   {content.synonyms.split(',').map((syn, i) => (
-                    <span key={i} className="px-6 py-1.5 bg-indigo-50 text-indigo-600 text-[11px] font-black rounded-lg border border-indigo-100 uppercase shadow-sm">
+                    <span key={i} className="px-3 py-1 bg-card text-foreground text-xs font-mono border border-border rounded-lg">
                       {syn.trim()}
                     </span>
                   ))}
@@ -309,8 +309,8 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
               )}
 
               {content.example && (
-                <div className="text-base md:text-xl text-indigo-500 italic bg-indigo-50/40 p-6 rounded-lg border border-indigo-100/30 leading-relaxed text-left relative">
-                  <span className="block font-black not-italic text-indigo-600 text-[10px] uppercase mb-2 opacity-50 tracking-widest">In Context</span>
+                <div className="text-sm md:text-base text-muted-foreground italic bg-card p-4 border border-border leading-relaxed text-left rounded-xl">
+                  <span className="block font-mono not-italic text-primary text-[10px] uppercase mb-1 tracking-widest">In Context</span>
                   "{content.example}"
                 </div>
               )}
@@ -318,9 +318,6 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
           </div>
         )}
       </div>
-
-      {/* Bottom accent */}
-      <div className="absolute inset-x-0 bottom-0 h-1.5 bg-indigo-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
     </div>
   );
 });

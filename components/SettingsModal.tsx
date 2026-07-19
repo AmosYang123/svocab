@@ -131,30 +131,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     ];
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-xl">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+            <div className="bg-card border border-border rounded-xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-sm">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-900">Settings</h2>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <h2 className="text-lg font-bold text-foreground">Settings</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-600"
+                        className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
                     >
                         <Icons.Close />
                     </button>
                 </div>
 
                 {/* Tabs */}
-                <div className="px-6 py-2 border-b border-gray-100 bg-gray-50/50">
-                    <div className="flex p-1 bg-gray-100 rounded-xl">
+                <div className="px-6 py-2 border-b border-border bg-muted/30">
+                    <div className="flex p-1 bg-muted rounded-xl">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex-1 py-2 px-4 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all
+                                className={`flex-1 py-2 px-4 text-[10px] font-semibold uppercase tracking-widest rounded-lg transition-all
                                     ${activeTab === tab.id
-                                        ? 'bg-white text-indigo-600 shadow-sm'
-                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200/50'
+                                        ? 'bg-card text-primary shadow-xs'
+                                        : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 {tab.label}
@@ -177,20 +177,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     {activeTab === 'general' && (
                         <div className="space-y-6">
                             {/* User Info */}
-                            <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                            <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-center justify-between">
                                 <div>
-                                    <div className="text-xs text-gray-500 mb-1 font-medium">Signed in as</div>
-                                    <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                        <div className="p-1 bg-indigo-100 rounded-md text-indigo-600">
+                                    <div className="text-xs text-muted-foreground mb-1 font-medium">Signed in as</div>
+                                    <div className="text-lg font-bold text-foreground flex items-center gap-2">
+                                        <div className="p-1 bg-primary/10 rounded-md text-primary">
                                             <Icons.User />
                                         </div>
                                         {currentUser}
                                     </div>
                                 </div>
 
-                                <span className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border ${storageMode === 'cloud' || storageMode === 'hybrid'
-                                    ? 'bg-blue-50 text-blue-700 border-blue-100'
-                                    : 'bg-gray-50 text-gray-500 border-gray-100'
+                                <span className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full border ${storageMode === 'cloud' || storageMode === 'hybrid'
+                                    ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                                    : 'bg-muted text-muted-foreground border-border'
                                     }`}>
                                     {storageMode === 'cloud' || storageMode === 'hybrid'
                                         ? <><Icons.Cloud /> Cloud Sync</>
@@ -223,39 +223,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
                             {/* Theme Selector */}
                             <div className="space-y-3">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                                <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-1 flex items-center gap-2">
                                     <Icons.Settings /> App Appearance
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     {[
-                                        { id: 'light', name: 'Light', colors: ['#f8fafc', '#4f46e5', '#1e1b4b'] },
-                                        { id: 'dark', name: 'Dark', colors: ['#0f172a', '#818cf8', '#f1f5f9'] },
+                                        { id: 'light', name: 'Light', colors: ['#f8f5f0', '#c55933', '#1c1917'] },
+                                        { id: 'dark', name: 'Dark', colors: ['#171412', '#d96a43', '#e7e0d6'] },
                                     ].map((t) => (
                                         <button
                                             key={t.id}
                                             onClick={() => onUpdatePreferences(t.id as ThemeMode, showDefaultVocab)}
-                                            className={`flex items-center justify-between px-4 py-4 rounded-xl border-2 transition-all text-left relative overflow-hidden group
+                                            className={`flex items-center justify-between px-4 py-4 rounded-xl border transition-all text-left relative overflow-hidden group
                                                 ${theme === t.id
-                                                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 shadow-md transform scale-[1.02]'
-                                                    : 'border-gray-100 bg-white text-gray-500 hover:border-indigo-200 hover:shadow-sm'
+                                                    ? 'border-primary bg-primary/10 text-foreground shadow-xs'
+                                                    : 'border-border bg-card text-muted-foreground hover:border-primary/40'
                                                 }`}
                                         >
                                             <div className="flex flex-col gap-2 flex-1 relative z-10">
-                                                <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${theme === t.id ? 'text-indigo-700' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                                                <span className={`text-[11px] font-semibold uppercase tracking-widest transition-colors ${theme === t.id ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>
                                                     {t.name}
                                                 </span>
                                                 <div className="flex gap-1.5">
                                                     {t.colors.map((c, i) => (
                                                         <div
                                                             key={i}
-                                                            className="w-4 h-4 rounded-md border border-black/5 shadow-inner"
+                                                            className="w-4 h-4 rounded-md border border-border"
                                                             style={{ backgroundColor: c }}
                                                         />
                                                     ))}
                                                 </div>
                                             </div>
                                             {theme === t.id && (
-                                                <div className="text-indigo-600 bg-white p-1 rounded-full shadow-sm relative z-10">
+                                                <div className="text-primary-foreground bg-primary p-1 rounded-full shadow-xs relative z-10">
                                                     <Icons.Check className="w-3.5 h-3.5" />
                                                 </div>
                                             )}
@@ -266,43 +266,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
                             {/* Vocabulary Options */}
                             <div className="space-y-3">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
-                                    <Icons.AcademicCap /> Library Options
+                                <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-1 flex items-center gap-2">
+                                    <Icons.AcademicCap /> Vocabulary Focus
                                 </h3>
-                                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-indigo-100 transition-all group">
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-xs font-black text-gray-700 uppercase tracking-wide">Standard Vocabulary</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">Include the built-in SSAT word list</span>
-                                        </div>
-                                        <div className="relative inline-flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={showDefaultVocab}
-                                                onChange={() => onUpdatePreferences(theme, !showDefaultVocab, showSatVocab)}
-                                            />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-indigo-100 transition-all group">
-                                    <label className="flex items-center justify-between cursor-pointer">
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-xs font-black text-gray-700 uppercase tracking-wide">SAT Vocabulary</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">Include the high school SAT word list</span>
-                                        </div>
-                                        <div className="relative inline-flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only peer"
-                                                checked={showSatVocab}
-                                                onChange={() => onUpdatePreferences(theme, showDefaultVocab, !showSatVocab)}
-                                            />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                        </div>
-                                    </label>
+                                <div className="flex bg-muted p-1 rounded-xl border border-border text-xs">
+                                    <button
+                                        onClick={() => onUpdatePreferences(theme, true, false)}
+                                        className={`flex-1 py-2 px-3 rounded-lg font-semibold uppercase tracking-wider text-[10px] transition-all ${
+                                            showDefaultVocab && !showSatVocab
+                                                ? 'bg-card text-foreground shadow-xs font-bold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        SSAT
+                                    </button>
+                                    <button
+                                        onClick={() => onUpdatePreferences(theme, false, true)}
+                                        className={`flex-1 py-2 px-3 rounded-lg font-semibold uppercase tracking-wider text-[10px] transition-all ${
+                                            !showDefaultVocab && showSatVocab
+                                                ? 'bg-card text-foreground shadow-xs font-bold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        SAT
+                                    </button>
+                                    <button
+                                        onClick={() => onUpdatePreferences(theme, true, true)}
+                                        className={`flex-1 py-2 px-3 rounded-lg font-semibold uppercase tracking-wider text-[10px] transition-all ${
+                                            showDefaultVocab && showSatVocab
+                                                ? 'bg-card text-foreground shadow-xs font-bold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        Combined
+                                    </button>
                                 </div>
                             </div>
 
@@ -595,20 +592,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="pt-2 border-t border-gray-100 mt-4">
+                            <div className="pt-2 border-t border-border mt-4">
                                 {showResetConfirm ? (
-                                    <div className="bg-red-50 p-4 rounded-xl border border-red-200 mb-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <p className="text-xs text-red-800 font-bold text-center uppercase tracking-widest mb-3">Reset all progress?</p>
+                                    <div className="bg-destructive/10 p-4 rounded-xl border border-destructive/30 mb-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <p className="text-xs text-destructive font-semibold text-center uppercase tracking-widest mb-3">Reset all progress?</p>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setShowResetConfirm(false)}
-                                                className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-lg text-xs uppercase"
+                                                className="flex-1 py-3 bg-card border border-border text-foreground font-semibold rounded-lg text-xs uppercase"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={handleResetData}
-                                                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-lg text-xs uppercase shadow-lg shadow-red-100"
+                                                className="flex-1 py-3 bg-destructive text-destructive-foreground font-semibold rounded-lg text-xs uppercase shadow-xs"
                                             >
                                                 Confirm
                                             </button>
@@ -617,14 +614,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 ) : (
                                     <button
                                         onClick={() => setShowResetConfirm(true)}
-                                        className="w-full mb-3 py-3 px-4 bg-white border border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-colors text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+                                        className="w-full mb-3 py-3 px-4 bg-card border border-destructive/20 text-destructive font-semibold rounded-xl hover:bg-destructive/10 transition-colors text-sm uppercase tracking-wider flex items-center justify-center gap-2"
                                     >
                                         <Icons.Trash /> Reset All Progress
                                     </button>
                                 )}
                                 <button
                                     onClick={onLogout}
-                                    className="w-full py-3.5 px-4 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 transition-all active:scale-[0.98] shadow-lg shadow-indigo-100 uppercase tracking-[0.2em] text-sm"
+                                    className="w-full py-3.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition-all active:scale-[0.98] shadow-xs uppercase tracking-[0.2em] text-xs"
                                 >
                                     Log Out
                                 </button>
@@ -637,7 +634,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className="space-y-6">
                             {/* Change Username */}
                             <form onSubmit={handleChangeUsername} className="space-y-3">
-                                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                                     <Icons.User /> Change Username
                                 </h3>
                                 <input
@@ -645,29 +642,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                     placeholder="New username"
                                     value={newUsername}
                                     onChange={(e) => setNewUsername(e.target.value)}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-gray-50"
+                                    className="w-full border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring bg-background text-foreground"
                                 />
                                 <input
                                     type="password"
                                     placeholder="Current password"
                                     value={usernamePassword}
                                     onChange={(e) => setUsernamePassword(e.target.value)}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-gray-50"
+                                    className="w-full border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring bg-background text-foreground"
                                 />
                                 <button
                                     type="submit"
                                     disabled={loading || !newUsername || !usernamePassword}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
+                                    className="w-full bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold py-3 rounded-lg transition-colors shadow-xs text-xs uppercase tracking-wider"
                                 >
                                     {loading ? 'Updating...' : 'Update Username'}
                                 </button>
                             </form>
 
-                            <div className="border-t border-gray-100" />
+                            <div className="border-t border-border" />
 
                             {/* Change Password */}
                             <form onSubmit={handleChangePassword} className="space-y-3">
-                                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                                     <Icons.Wrench /> Change Password
                                 </h3>
                                 <input
@@ -675,26 +672,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                     placeholder="Current password"
                                     value={oldPassword}
                                     onChange={(e) => setOldPassword(e.target.value)}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-gray-50"
+                                    className="w-full border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring bg-background text-foreground"
                                 />
                                 <input
                                     type="password"
                                     placeholder="New password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-gray-50"
+                                    className="w-full border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring bg-background text-foreground"
                                 />
                                 <input
                                     type="password"
                                     placeholder="Confirm new password"
                                     value={confirmNewPassword}
                                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-gray-50"
+                                    className="w-full border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring bg-background text-foreground"
                                 />
                                 <button
                                     type="submit"
                                     disabled={loading || !oldPassword || !newPassword || !confirmNewPassword}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium py-3 rounded-lg transition-colors shadow-sm"
+                                    className="w-full bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground font-semibold py-3 rounded-lg transition-colors shadow-xs text-xs uppercase tracking-wider"
                                 >
                                     {loading ? 'Updating...' : 'Update Password'}
                                 </button>

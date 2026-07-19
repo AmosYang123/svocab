@@ -25,6 +25,26 @@ export interface CloudAuthResult {
     username?: string;
 }
 
+const CLOUD_TIMEOUT_MS = 2500;
+
+function withTimeout<T>(promiseLike: PromiseLike<T>, ms: number = CLOUD_TIMEOUT_MS): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            reject(new Error('Supabase database is paused or unreachable. Falling back to local offline mode.'));
+        }, ms);
+        Promise.resolve(promiseLike).then(
+            (res) => {
+                clearTimeout(timer);
+                resolve(res);
+            },
+            (err) => {
+                clearTimeout(timer);
+                reject(err);
+            }
+        );
+    });
+}
+
 // ============================
 // Cloud Database Service
 // ============================
@@ -50,11 +70,11 @@ export const cloudService = {
             const fakeEmail = `${normalizedUsername}@gmail.com`;
 
             // Check if username is already taken
-            const { data: existingProfile } = await supabase
+            const { data: existingProfile } = await withTimeout(supabase
                 .from('profiles')
                 .select('username')
                 .eq('username', normalizedUsername)
-                .single();
+                .single());
 
             if (existingProfile) {
                 return { success: false, message: 'Username already taken.' };
@@ -67,13 +87,14 @@ export const cloudService = {
             }
 
             // Create auth user with fake email
-            const { data: authData, error: authError } = await supabase.auth.signUp({
+            const authResult = await withTimeout(supabase.auth.signUp({
                 email: fakeEmail,
                 password,
                 options: {
                     data: { username: normalizedUsername }
                 }
-            });
+            }));
+            const { data: authData, error: authError } = authResult;
 
             if (authError) {
                 if (authError.message.includes('already registered')) {
@@ -86,16 +107,14 @@ export const cloudService = {
                 return { success: false, message: 'Registration failed.' };
             }
 
-            // Profile and preferences are handled by DB trigger handle_new_user()
-            // Just verify registration success
             return {
                 success: true,
                 message: 'Account created successfully!',
                 userId: authData.user.id,
                 username: normalizedUsername,
             };
-        } catch (error) {
-            return { success: false, message: 'Registration failed. Please try again.' };
+        } catch (error: any) {
+            return { success: false, message: error?.message || 'Registration failed. Operating in local mode.' };
         }
     },
 
@@ -106,13 +125,13 @@ export const cloudService = {
 
         try {
             const normalizedUsername = username.trim().toLowerCase();
-            // Generate fake email from username
             const fakeEmail = `${normalizedUsername}@gmail.com`;
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const signInResult = await withTimeout(supabase.auth.signInWithPassword({
                 email: fakeEmail,
                 password,
-            });
+            }));
+            const { data, error } = signInResult;
 
             if (error) {
                 if (error.message.includes('Invalid login credentials')) {
@@ -384,6 +403,8 @@ export const cloudService = {
         theme: ThemeMode;
         showDefaultVocab: boolean;
         showSatVocab: boolean;
+        reminderEnabled?: boolean;
+        reminderTime?: string;
         lastStudyMode?: string;
         lastActiveSetId?: string;
         lastCardIndex?: number;
@@ -393,7 +414,7 @@ export const cloudService = {
         try {
             const { data } = await supabase
                 .from('user_preferences')
-                .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index')
+                .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index, reminder_enabled, reminder_time')
                 .eq('user_id', userId)
                 .single();
 
@@ -403,6 +424,8 @@ export const cloudService = {
                 theme: data.theme as ThemeMode,
                 showDefaultVocab: data.show_default_vocab ?? true,
                 showSatVocab: castedData?.show_sat_vocab ?? false,
+                reminderEnabled: castedData?.reminder_enabled ?? false,
+                reminderTime: castedData?.reminder_time ?? '09:00',
                 lastStudyMode: castedData?.last_study_mode || 'all',
                 lastActiveSetId: castedData?.last_active_set_id || null,
                 lastCardIndex: castedData?.last_card_index ?? 0
@@ -419,7 +442,9 @@ export const cloudService = {
         showSatVocab?: boolean,
         lastStudyMode?: string,
         lastActiveSetId?: string,
-        lastCardIndex?: number
+        lastCardIndex?: number,
+        reminderEnabled?: boolean,
+        reminderTime?: string
     ): Promise<boolean> {
         if (!isSupabaseConfigured) return false;
 
@@ -435,6 +460,8 @@ export const cloudService = {
             if (lastStudyMode !== undefined) updateObj.last_study_mode = lastStudyMode;
             if (lastActiveSetId !== undefined) updateObj.last_active_set_id = lastActiveSetId;
             if (lastCardIndex !== undefined) updateObj.last_card_index = lastCardIndex;
+            if (reminderEnabled !== undefined) updateObj.reminder_enabled = reminderEnabled;
+            if (reminderTime !== undefined) updateObj.reminder_time = reminderTime;
 
             const { error } = await supabase
                 .from('user_preferences')
@@ -496,6 +523,95 @@ export const cloudService = {
     unsubscribe(subscription: any) {
         if (subscription) {
             supabase.removeChannel(subscription);
+        }
+    },
+
+    // ----------------
+    // Daily Progress
+    // ----------------
+    async getDailyProgress(userId: string, date: string): Promise<{
+        date: string;
+        wordNames: string[];
+        completed: boolean;
+        completedAt: string | null;
+        progress: any;
+    } | null> {
+        if (!isSupabaseConfigured) return null;
+
+        try {
+            const { data } = await supabase
+                .from('user_daily_progress')
+                .select('date, word_names, completed, completed_at, progress')
+                .eq('user_id', userId)
+                .eq('date', date)
+                .single();
+
+            if (!data) return null;
+
+            return {
+                date: data.date,
+                wordNames: data.word_names || [],
+                completed: data.completed || false,
+                completedAt: data.completed_at || null,
+                progress: data.progress || {},
+            };
+        } catch {
+            return null;
+        }
+    },
+
+    async getAllDailyProgress(userId: string): Promise<{
+        date: string;
+        wordNames: string[];
+        completed: boolean;
+        completedAt: string | null;
+        progress: any;
+    }[]> {
+        if (!isSupabaseConfigured) return [];
+
+        try {
+            const { data } = await supabase
+                .from('user_daily_progress')
+                .select('date, word_names, completed, completed_at, progress')
+                .eq('user_id', userId)
+                .order('date', { ascending: false });
+
+            return (data || []).map(row => ({
+                date: row.date,
+                wordNames: row.word_names || [],
+                completed: row.completed || false,
+                completedAt: row.completed_at || null,
+                progress: row.progress || {},
+            }));
+        } catch {
+            return [];
+        }
+    },
+
+    async saveDailyProgress(userId: string, dailyProgress: {
+        date: string;
+        wordNames: string[];
+        completed: boolean;
+        completedAt: string | null;
+        progress: any;
+    }): Promise<boolean> {
+        if (!isSupabaseConfigured) return false;
+
+        try {
+            const { error } = await supabase
+                .from('user_daily_progress')
+                .upsert({
+                    user_id: userId,
+                    date: dailyProgress.date,
+                    word_names: dailyProgress.wordNames,
+                    completed: dailyProgress.completed,
+                    completed_at: dailyProgress.completedAt,
+                    progress: dailyProgress.progress,
+                }, { onConflict: 'user_id,date' });
+
+            return !error;
+        } catch {
+            return false;
         }
     },
 };

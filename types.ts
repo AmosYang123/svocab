@@ -42,6 +42,24 @@ export interface UserPreferences {
   theme: ThemeMode;
   showDefaultVocab: boolean;
   showSatVocab?: boolean;
+  reminderEnabled?: boolean;
+  reminderTime?: string; // e.g. "09:00"
+}
+
+export interface DailyProgress {
+  date: string; // YYYY-MM-DD
+  wordNames: string[];
+  completed: boolean;
+  completedAt: string | null;
+  progress: {
+    completedBatches: number; // 0 to 3
+    wordStates: {
+      [wordName: string]: {
+        attempts: number;
+        correct: boolean;
+      }
+    };
+  };
 }
 
 // --- Learn Mode Types ---

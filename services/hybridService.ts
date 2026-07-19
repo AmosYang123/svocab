@@ -13,7 +13,7 @@
 
 import { cloudService, CloudUserData, CloudAuthResult } from './cloudService';
 import { authService } from '../authService';
-import { Word, WordStatusMap, MarkedWordsMap, StudySet, ThemeMode } from '../types';
+import { Word, WordStatusMap, MarkedWordsMap, StudySet, ThemeMode, DailyProgress } from '../types';
 
 // ============================
 // Types
@@ -94,18 +94,21 @@ export const hybridService = {
     ): Promise<HybridAuthResult> {
         const mode = getStorageMode();
 
-        // For cloud/hybrid mode, use Supabase with username-only
+        // For cloud/hybrid mode, try Supabase with fallback to local
         if ((mode === 'cloud' || mode === 'hybrid') && cloudService.isConfigured()) {
-            const result = await cloudService.register(username, password);
-            if (result.success && result.userId) {
-                setCloudUserId(result.userId);
-                // Also create local account as backup
-                await authService.register(username, password);
+            try {
+                const result = await cloudService.register(username, password);
+                if (result.success && result.userId) {
+                    setCloudUserId(result.userId);
+                    await authService.register(username, password);
+                    return { ...result, mode };
+                }
+            } catch (e) {
+                console.warn('Cloud registration offline/paused, falling back to local mode:', e);
             }
-            return { ...result, mode };
         }
 
-        // Local-only mode
+        // Fallback: Local-only mode
         const localResult = await authService.register(username, password);
         return {
             success: localResult.success,
@@ -123,27 +126,18 @@ export const hybridService = {
 
         // Try cloud login if available
         if ((mode === 'cloud' || mode === 'hybrid') && cloudService.isConfigured()) {
-            const result = await cloudService.login(username, password);
-            if (result.success && result.userId) {
-                setCloudUserId(result.userId);
-                return { ...result, mode: 'cloud' };
-            }
-            // If cloud login failed and we're in hybrid mode, try local
-            if (mode === 'hybrid') {
-                const localResult = await authService.login(username, password);
-                if (localResult.success) {
-                    return {
-                        success: true,
-                        message: localResult.message,
-                        username: localResult.user,
-                        mode: 'local'
-                    };
+            try {
+                const result = await cloudService.login(username, password);
+                if (result.success && result.userId) {
+                    setCloudUserId(result.userId);
+                    return { ...result, mode: 'cloud' };
                 }
+            } catch (e) {
+                console.warn('Cloud login offline/paused, trying local account:', e);
             }
-            return { ...result, mode };
         }
 
-        // Local-only mode
+        // Fallback: Try local login or create local session
         const localResult = await authService.login(username, password);
         if (localResult.success) {
             return {
@@ -154,9 +148,20 @@ export const hybridService = {
             };
         }
 
+        // If local account doesn't exist yet (e.g. registered when cloud was active), auto-create local account
+        const autoReg = await authService.register(username, password);
+        if (autoReg.success) {
+            return {
+                success: true,
+                message: 'Signed in via Local Storage (Offline Mode)',
+                username: autoReg.user,
+                mode: 'local'
+            };
+        }
+
         return {
             success: false,
-            message: localResult.message,
+            message: localResult.message || 'Login failed.',
             mode
         };
     },
@@ -293,6 +298,85 @@ export const hybridService = {
     },
 
     // ----------------
+    // Daily Progress
+    // ----------------
+    async getDailyProgress(date: string): Promise<DailyProgress | null> {
+        const mode = getStorageMode();
+        const cloudUserId = getCloudUserId();
+
+        // Try cloud first
+        if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId && cloudService.isConfigured()) {
+            try {
+                const cloudProgress = await cloudService.getDailyProgress(cloudUserId, date);
+                if (cloudProgress) {
+                    return cloudProgress;
+                }
+            } catch (e) {
+                // Ignore and fall back to local
+            }
+        }
+
+        // Fall back to local
+        return authService.getDailyProgress(date);
+    },
+
+    async saveDailyProgress(progress: DailyProgress): Promise<boolean> {
+        const mode = getStorageMode();
+        const cloudUserId = getCloudUserId();
+        const localUsername = authService.getCurrentUser();
+
+        if (localUsername && localUsername.startsWith('guest_')) {
+            return true; // Skip saving for guest
+        }
+
+        let cloudSuccess = false;
+        let localSuccess = false;
+
+        // Save to cloud if available
+        if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId && cloudService.isConfigured()) {
+            try {
+                cloudSuccess = await cloudService.saveDailyProgress(cloudUserId, progress);
+            } catch (e) {
+                // Ignore and fail silently
+            }
+        }
+
+        // Save locally as cache/backup
+        try {
+            await authService.saveDailyProgress(progress);
+            localSuccess = true;
+        } catch (e) {
+            // Ignore and fail silently
+        }
+
+        if (mode === 'hybrid') {
+            return cloudSuccess || localSuccess;
+        }
+
+        return mode === 'cloud' ? cloudSuccess : localSuccess;
+    },
+
+    async getAllDailyProgress(): Promise<DailyProgress[]> {
+        const mode = getStorageMode();
+        const cloudUserId = getCloudUserId();
+
+        // Try cloud first
+        if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId && cloudService.isConfigured()) {
+            try {
+                const cloudResults = await cloudService.getAllDailyProgress(cloudUserId);
+                if (cloudResults && cloudResults.length > 0) {
+                    return cloudResults;
+                }
+            } catch (e) {
+                // Ignore and fall back to local
+            }
+        }
+
+        // Fall back to local
+        return authService.getAllDailyProgress();
+    },
+
+    // ----------------
     // Preferences
     // ----------------
     async getPreferences(): Promise<{
@@ -300,6 +384,8 @@ export const hybridService = {
         showDefaultVocab: boolean;
         showSatVocab: boolean;
         isPro: boolean;
+        reminderEnabled?: boolean;
+        reminderTime?: string;
         lastStudyMode?: string;
         lastActiveSetId?: string;
         lastCardIndex?: number;
@@ -321,6 +407,8 @@ export const hybridService = {
                 showDefaultVocab: localPrefs.showDefaultVocab ?? true,
                 showSatVocab: localPrefs.showSatVocab ?? false,
                 isPro: localPrefs.isPro ?? false,
+                reminderEnabled: (localPrefs as any).reminderEnabled ?? false,
+                reminderTime: (localPrefs as any).reminderTime ?? '09:00',
                 // These are loaded from localStorage in App.tsx typically, but keeping here for consistency
                 lastStudyMode: localStorage.getItem(`ssat_${localPrefs.username}_mode`) || 'all',
                 lastActiveSetId: localStorage.getItem(`ssat_${localPrefs.username}_set_id`) || undefined,
@@ -328,7 +416,7 @@ export const hybridService = {
             };
         }
 
-        return { theme: 'light', showDefaultVocab: true, showSatVocab: false, isPro: false };
+        return { theme: 'light', showDefaultVocab: true, showSatVocab: false, isPro: false, reminderEnabled: false, reminderTime: '09:00' };
     },
 
     async updateProStatus(isPro: boolean): Promise<boolean> {
@@ -356,7 +444,9 @@ export const hybridService = {
         showSatVocab?: boolean,
         lastStudyMode?: string,
         lastActiveSetId?: string,
-        lastCardIndex?: number
+        lastCardIndex?: number,
+        reminderEnabled?: boolean,
+        reminderTime?: string
     ): Promise<boolean> {
         const cloudUserId = getCloudUserId();
         const localUsername = authService.getCurrentUser();
@@ -367,10 +457,28 @@ export const hybridService = {
 
         // Save to both
         if (cloudUserId && cloudService.isConfigured()) {
-            await cloudService.savePreferences(cloudUserId, theme, showDefaultVocab, showSatVocab, lastStudyMode, lastActiveSetId, lastCardIndex);
+            await cloudService.savePreferences(
+                cloudUserId, 
+                theme, 
+                showDefaultVocab, 
+                showSatVocab, 
+                lastStudyMode, 
+                lastActiveSetId, 
+                lastCardIndex,
+                reminderEnabled,
+                reminderTime
+            );
         }
 
-        await authService.saveUserPreferences(theme, showDefaultVocab, undefined, showSatVocab);
+        const currentPrefs = await authService.getUserPreferences();
+        await authService.saveUserPreferences(
+            theme, 
+            showDefaultVocab, 
+            currentPrefs?.isPro ?? false, 
+            showSatVocab,
+            reminderEnabled,
+            reminderTime
+        );
         return true;
     },
 

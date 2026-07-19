@@ -11,6 +11,11 @@ import { authService } from './authService';
 import { hybridService, StorageMode } from './services/hybridService';
 import { cloudService } from './services/cloudService';
 
+import SidebarLayout from './components/SidebarLayout';
+import DailyStudyCenter from './components/DailyStudyCenter';
+import DailyExerciseFlow from './components/DailyExerciseFlow';
+import { notificationService } from './services/notificationService';
+
 const TestInterface = lazy(() => import('./components/TestInterface'));
 const SettingsModal = lazy(() => import('./components/SettingsModal'));
 const LearnSession = lazy(() => import('./components/LearnSession'));
@@ -29,11 +34,85 @@ const PaymentPage = lazy(() => import('./components/PaymentModal')); // Re-using
 const PaymentRouteWrapper = () => {
   const navigate = useNavigate();
   return (
-    <div className="fixed inset-0 z-50 bg-slate-50 flex items-center justify-center">
-      <Suspense fallback={<div>Loading...</div>}>
+    <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+      <Suspense fallback={<div className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading...</div>}>
         <PaymentModal onClose={() => navigate('/')} onUpgrade={() => navigate('/')} />
       </Suspense>
     </div>
+  );
+};
+
+// Daily Exercise flow loader with resilient auto-generation
+const DailyExerciseRoute = ({ vocab }: { vocab: Word[] }) => {
+  const [words, setWords] = useState<string[] | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        let daily = await hybridService.getDailyProgress(todayStr);
+
+        if (daily && daily.wordNames && daily.wordNames.length > 0) {
+          setWords(daily.wordNames);
+        } else {
+          // Auto-generate today's 30 words if missing instead of redirecting back
+          const userData = await hybridService.getUserData();
+          const studiedWordNames = new Set(Object.keys(userData?.wordStatuses || {}));
+          const unstudiedWords = vocab.filter(w => !studiedWordNames.has(w.name));
+          let selectedNames = unstudiedWords.slice(0, 30).map(w => w.name);
+
+          if (selectedNames.length < 30) {
+            const unmastered = vocab.filter(w => !selectedNames.includes(w.name) && userData?.wordStatuses[w.name] !== 'mastered');
+            selectedNames = [...selectedNames, ...unmastered.slice(0, 30 - selectedNames.length).map(w => w.name)];
+          }
+
+          if (selectedNames.length < 30) {
+            const remaining = vocab.filter(w => !selectedNames.includes(w.name));
+            selectedNames = [...selectedNames, ...remaining.slice(0, 30 - selectedNames.length).map(w => w.name)];
+          }
+
+          const newRecord = {
+            date: todayStr,
+            wordNames: selectedNames,
+            completed: false,
+            completedAt: null,
+            progress: {
+              completedBatches: 0,
+              wordStates: {}
+            }
+          };
+
+          await hybridService.saveDailyProgress(newRecord);
+          setWords(selectedNames);
+        }
+      } catch (e) {
+        console.error('Error loading daily exercise:', e);
+        // Fallback: use first 30 words in vocab
+        setWords(vocab.slice(0, 30).map(w => w.name));
+      }
+    }
+    load();
+  }, [vocab]);
+
+  if (!words) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 p-8 border border-border bg-card">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent animate-spin"></div>
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Preparing daily exercise...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DailyExerciseFlow
+      wordNames={words}
+      vocab={vocab}
+      onComplete={() => navigate('/daily')}
+      onCancel={() => navigate('/daily')}
+    />
   );
 };
 
@@ -43,7 +122,6 @@ import { Elements } from '@stripe/react-stripe-js';
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_placeholder');
 
 import MainDashboard from './components/MainDashboard';
-import LandingPage from './components/LandingPage';
 
 export default function App() {
   const navigate = useNavigate();
@@ -166,6 +244,16 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Set up daily notification scheduler
+  useEffect(() => {
+    if (currentUser) {
+      const cleanup = notificationService.setupDailyScheduler();
+      return () => {
+        if (cleanup) cleanup();
+      };
+    }
+  }, [currentUser]);
 
   const handleUpdatePreferences = useCallback(async (newTheme: ThemeMode, newShowDefault: boolean, newShowSat?: boolean) => {
     setTheme(newTheme);
@@ -663,6 +751,20 @@ export default function App() {
     );
   }
 
+  const wrapSidebar = (element: React.ReactNode) => {
+    return (
+      <SidebarLayout
+        currentUser={currentUser}
+        theme={theme}
+        onUpdateTheme={(newTheme) => handleUpdatePreferences(newTheme, showDefaultVocab, showSatVocab)}
+        onLogout={handleLogout}
+        onShowSettings={handleShowSettings}
+      >
+        {element}
+      </SidebarLayout>
+    );
+  };
+
   return (
     <Elements stripe={stripePromise}>
       <Routes>
@@ -680,7 +782,7 @@ export default function App() {
         <Route path="/" element={
           !currentUser ? (
             <Navigate to="/signin" replace />
-          ) : (
+          ) : wrapSidebar(
             <MainDashboard
               studyMode={studyMode}
               activeSetId={activeSetId}
@@ -743,9 +845,23 @@ export default function App() {
             />
           )
         } />
+        <Route path="/daily" element={
+          !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
+            <DailyStudyCenter
+              vocab={vocab}
+              onStartExercise={(wordNames) => navigate('/daily-exercise')}
+              onViewReview={(wordNames) => navigate('/daily-exercise')}
+            />
+          )
+        } />
+        <Route path="/daily-exercise" element={
+          !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
+            <DailyExerciseRoute vocab={vocab} />
+          )
+        } />
         <Route path="/learn" element={
-          !currentUser ? <Navigate to="/" replace /> : (
-            <Suspense fallback={<div className="p-8 text-center text-indigo-500 font-bold">Loading component...</div>}>
+          !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
+            <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading component...</div>}>
               <LearnSession
                 studyList={learnStudyList}
                 onComplete={navigateHome}
@@ -755,8 +871,8 @@ export default function App() {
           )
         } />
         <Route path="/mtest" element={
-          !currentUser ? <Navigate to="/" replace /> : (
-            <Suspense fallback={<div className="p-8 text-center text-indigo-500 font-bold">Loading component...</div>}>
+          !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
+            <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading component...</div>}>
               <TestInterface
                 studyList={studyList}
                 vocab={vocab}
@@ -771,8 +887,8 @@ export default function App() {
           )
         } />
         <Route path="/wtest" element={
-          !currentUser ? <Navigate to="/" replace /> : (
-            <Suspense fallback={<div className="p-8 text-center text-indigo-500 font-bold">Loading component...</div>}>
+          !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
+            <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-muted-foreground uppercase tracking-widest">Loading component...</div>}>
               <TestInterface
                 studyList={studyList}
                 vocab={vocab}

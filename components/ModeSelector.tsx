@@ -70,38 +70,20 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
   };
 
   const renderModeButton = (mode: { id: StudyMode; label: string; count: number; color?: string; disabled?: boolean }) => {
-    let activeStyles = '';
-    let inactiveStyles = '';
-
-    if (mode.id.includes('basic')) {
-      activeStyles = 'bg-teal-600 border-teal-600 text-white shadow-md';
-      inactiveStyles = 'bg-white text-teal-700 border-teal-50 hover:border-teal-200';
-    } else if (mode.id.includes('easy')) {
-      activeStyles = 'bg-green-600 border-green-600 text-white shadow-md';
-      inactiveStyles = 'bg-white text-green-700 border-green-50 hover:border-green-200';
-    } else if (mode.id.includes('medium')) {
-      activeStyles = 'bg-orange-500 border-orange-500 text-white shadow-md';
-      inactiveStyles = 'bg-white text-orange-700 border-orange-50 hover:border-orange-200';
-    } else if (mode.id.includes('hard')) {
-      activeStyles = 'bg-indigo-900 border-indigo-900 text-white shadow-md';
-      inactiveStyles = 'bg-white text-indigo-900 border-indigo-50 hover:border-indigo-200';
-    } else {
-      activeStyles = 'bg-indigo-600 text-white border-indigo-600 shadow-md';
-      inactiveStyles = 'bg-white text-indigo-700 border-indigo-50 hover:border-indigo-200 disabled:opacity-30';
-    }
+    const isActive = currentMode === mode.id && !activeSetId;
 
     return (
       <button
         key={mode.id}
         disabled={mode.disabled}
         onClick={() => onModeChange(mode.id)}
-        className={`px-6 py-1.5 rounded-lg text-[10px] font-black transition-all border-2 active:scale-95 uppercase tracking-[0.1em] shadow-sm
-          ${currentMode === mode.id && !activeSetId
-            ? activeStyles
-            : inactiveStyles
-          }`}
+        className={`px-4 py-1.5 rounded-none text-xs font-mono transition-all border uppercase tracking-wider disabled:opacity-30 ${
+          isActive
+            ? 'bg-primary text-primary-foreground border-primary font-semibold'
+            : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+        }`}
       >
-        {mode.label} <span className="opacity-50 ml-1">[{mode.count}]</span>
+        {mode.label} <span className="opacity-60 ml-1">[{mode.count}]</span>
       </button>
     );
   };
@@ -119,12 +101,12 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
       </div>
 
       {/* Custom Sets */}
-      <div className="pt-3 border-t border-indigo-100/30">
+      <div className="pt-3 border-t border-border">
         <div className="flex items-center justify-between mb-3 px-2">
-          <h3 className="text-[9px] font-black text-indigo-300 uppercase tracking-[0.3em]">Groups</h3>
+          <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-[0.3em]">Groups</h3>
           <button
             onClick={onOpenCustomSelector}
-            className="text-[9px] font-black text-indigo-600 bg-white border border-indigo-100 px-8 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm active:scale-95 uppercase tracking-widest"
+            className="text-[10px] font-semibold text-primary bg-card border border-border px-8 py-1.5 rounded-lg hover:bg-muted transition-colors shadow-xs active:scale-[0.98] uppercase tracking-widest"
           >
             + Create Group
           </button>
@@ -138,11 +120,11 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
               onDoubleClick={() => handleStartRename(set)}
             >
               {editingId === set.id ? (
-                <div className="flex items-center bg-white border-2 border-indigo-500 rounded-lg px-4 h-full shadow-lg z-50">
+                <div className="flex items-center bg-card border-2 border-primary rounded-lg px-4 h-full shadow-sm z-50">
                   <input
                     autoFocus
                     type="text"
-                    className="text-xs font-black text-indigo-900 outline-none w-32 bg-transparent"
+                    className="text-xs font-semibold text-foreground outline-none w-32 bg-transparent"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => handleFinishRename(set.id)}
@@ -153,19 +135,19 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
                   />
                 </div>
               ) : (
-                <div className={`flex items-center rounded-lg overflow-hidden border-2 transition-all shadow-sm
+                <div className={`flex items-center rounded-lg overflow-hidden border-2 transition-all shadow-xs
                   ${activeSetId === set.id
-                    ? 'border-indigo-600 bg-indigo-600 shadow-md'
-                    : 'border-indigo-50 bg-white hover:border-indigo-200'
+                    ? 'border-primary bg-primary shadow-sm'
+                    : 'border-border bg-card hover:border-primary/30'
                   }`}
                 >
                   <button
                     onClick={() => onModeChange('custom', set.id)}
                     className={`px-6 h-full text-left flex items-center gap-2 max-w-[180px]
-                      ${activeSetId === set.id ? 'text-white' : 'text-indigo-900'}`}
+                      ${activeSetId === set.id ? 'text-primary-foreground' : 'text-foreground'}`}
                   >
-                    <span className="text-[10px] font-black truncate uppercase tracking-tighter">{set.name}</span>
-                    <span className={`text-[9px] font-black ${activeSetId === set.id ? 'text-indigo-200' : 'text-indigo-400'}`}>
+                    <span className="text-[10px] font-semibold truncate uppercase tracking-tighter">{set.name}</span>
+                    <span className={`text-[9px] font-semibold ${activeSetId === set.id ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
                       {set.wordNames.length}
                     </span>
                   </button>
@@ -178,8 +160,8 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
                     }}
                     className={`w-9 h-full flex items-center justify-center border-l transition-colors
                       ${activeSetId === set.id
-                        ? 'border-indigo-500 text-white/40 hover:bg-red-500 hover:text-white'
-                        : 'border-indigo-50 text-indigo-100 hover:bg-red-50 hover:text-red-500'
+                        ? 'border-primary-foreground/20 text-primary-foreground/40 hover:bg-destructive hover:text-primary-foreground'
+                        : 'border-border text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive'
                       }`}
                   >
                     <Icons.Close />
@@ -189,7 +171,7 @@ const ModeSelector: React.FC<ModeSelectorProps> = memo(({
             </div>
           ))}
           {savedSets.length === 0 && (
-            <div className="text-[9px] text-indigo-100 font-black py-2 px-2 uppercase tracking-[0.3em] opacity-40">
+            <div className="text-[10px] text-muted-foreground font-mono py-2 px-2 uppercase tracking-[0.3em]">
               No Custom Groups
             </div>
           )}
