@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Dark Slate Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#070B14"/>
+    </linearGradient>
+
+    <!-- Orange Gradient -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7E26"/>
+      <stop offset="50%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+
+    <!-- Amber Ribbon Gradient -->
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F97316"/>
+    </linearGradient>
+
+    <!-- Subtle Border Stroke -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F97316" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#334155" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base Tile -->
+  <rect x="16" y="16" width="480" height="480" rx="128" fill="url(#bgGrad)"/>
+  <rect x="16" y="16" width="480" height="480" rx="128" fill="none" stroke="url(#borderGrad)" stroke-width="4"/>
+
+  <!-- Iconic Geometric 'S' Monogram -->
+  <path d="M 330 170
+           C 330 125, 290 100, 240 100
+           C 180 100, 150 140, 150 180
+           C 150 240, 220 260, 275 280
+           C 335 302, 362 335, 362 380
+           C 362 430, 318 460, 256 460
+           C 190 460, 146 425, 146 375" 
+        fill="none" 
+        stroke="url(#orangeGrad)" 
+        stroke-width="52" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+
+  <!-- Interlocking Accent Curve for Depth -->
+  <path d="M 310 135
+           C 290 110, 260 102, 230 106" 
+        fill="none" 
+        stroke="url(#amberGrad)" 
+        stroke-width="18" 
+        stroke-linecap="round"/>
+
+  <path d="M 202 425
+           C 222 450, 252 458, 282 454" 
+        fill="none" 
+        stroke="url(#amberGrad)" 
+        stroke-width="18" 
+        stroke-linecap="round"/>
+</svg>
