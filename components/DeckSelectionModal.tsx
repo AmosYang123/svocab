@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BookOpen, GraduationCap, Layers, Check } from 'lucide-react';
 
 interface DeckSelectionModalProps {
@@ -8,13 +8,15 @@ interface DeckSelectionModalProps {
 }
 
 export default function DeckSelectionModal({
-  currentShowDefault,
-  currentShowSat,
   onSelectDeck
 }: DeckSelectionModalProps) {
+  const [selectedId, setSelectedId] = useState<'sat' | 'ssat' | 'both' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const options = [
     {
-      id: 'sat',
+      id: 'sat' as const,
       title: 'SAT',
       subtitle: '~3,000 Words',
       description: 'Digital SAT high-frequency vocabulary.',
@@ -23,7 +25,7 @@ export default function DeckSelectionModal({
       showSat: true,
     },
     {
-      id: 'ssat',
+      id: 'ssat' as const,
       title: 'SSAT',
       subtitle: '~1,000 Words',
       description: 'Middle & Upper Level SSAT preparation.',
@@ -32,7 +34,7 @@ export default function DeckSelectionModal({
       showSat: false,
     },
     {
-      id: 'both',
+      id: 'both' as const,
       title: 'Combined',
       subtitle: '~4,000 Words',
       description: 'All SSAT & SAT words together.',
@@ -41,6 +43,19 @@ export default function DeckSelectionModal({
       showSat: true,
     },
   ];
+
+  const handleSubmit = () => {
+    if (!selectedId || isSubmitting) return;
+    const selectedOption = options.find(o => o.id === selectedId);
+    if (!selectedOption) return;
+
+    setIsSubmitting(true);
+    setIsSubmitted(true);
+
+    setTimeout(() => {
+      onSelectDeck(selectedOption.showDefault, selectedOption.showSat);
+    }, 450);
+  };
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
@@ -58,18 +73,15 @@ export default function DeckSelectionModal({
         {/* Horizontal Deck Cards (SAT -> SSAT -> Combined) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {options.map((opt) => {
-            const isSelected =
-              (opt.id === 'ssat' && currentShowDefault && !currentShowSat) ||
-              (opt.id === 'sat' && !currentShowDefault && currentShowSat) ||
-              (opt.id === 'both' && currentShowDefault && currentShowSat);
+            const isSelected = selectedId === opt.id;
             const Icon = opt.icon;
 
             return (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => onSelectDeck(opt.showDefault, opt.showSat)}
-                className={`relative flex flex-col items-center text-center p-4 rounded-lg border text-left transition-all cursor-pointer select-none ${
+                onClick={() => setSelectedId(opt.id)}
+                className={`relative flex flex-col items-center text-center p-4 rounded-lg border transition-all cursor-pointer select-none ${
                   isSelected
                     ? 'border-primary bg-primary/10 text-foreground shadow-xs ring-1 ring-primary'
                     : 'border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground'
@@ -93,20 +105,46 @@ export default function DeckSelectionModal({
                   {opt.description}
                 </div>
 
-                {isSelected && (
-                  <div className="mt-3 text-[10px] font-mono font-semibold uppercase tracking-wider text-primary flex items-center gap-1">
-                    <Check className="w-3 h-3 stroke-[3]" /> Active
+                <div className="mt-3">
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                    isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40 bg-transparent'
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                   </div>
-                )}
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Minimalist Reassurance Footnote */}
-        <p className="text-center text-[11px] text-muted-foreground font-mono">
-          Note: You can change your deck selection anytime in <span className="text-foreground font-semibold">Settings</span>.
-        </p>
+        {/* Submit Action & Footnote */}
+        <div className="space-y-3 pt-3 border-t border-border">
+          <button
+            type="button"
+            disabled={!selectedId || isSubmitting}
+            onClick={handleSubmit}
+            className={`w-full py-2.5 px-6 rounded-lg font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm ${
+              isSubmitted
+                ? 'bg-emerald-600 text-white'
+                : selectedId
+                  ? 'bg-primary text-primary-foreground hover:opacity-95 active:scale-[0.99]'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
+            }`}
+          >
+            {isSubmitted ? (
+              <>
+                <Check className="w-4 h-4 stroke-[3] animate-in zoom-in-50" />
+                <span>Submitted</span>
+              </>
+            ) : (
+              <span>Submit Selection</span>
+            )}
+          </button>
+
+          <p className="text-center text-[11px] text-muted-foreground font-mono">
+            Note: You can change your deck selection anytime in <span className="text-foreground font-semibold">Settings</span>.
+          </p>
+        </div>
       </div>
     </div>
   );
