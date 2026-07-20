@@ -673,6 +673,14 @@ export default function App() {
             }
           }
           break;
+        case 'KeyS':
+        case 'KeyM':
+          // Toggle Star / Mark word
+          if (studyList[currentIndex]) {
+            e.preventDefault();
+            onToggleMark(studyList[currentIndex].name);
+          }
+          break;
       }
     };
 
