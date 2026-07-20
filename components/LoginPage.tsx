@@ -33,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
         setError('');
     }, [initialMode]);
 
-    const handleSocialLogin = async (provider: 'google' | 'github' | 'azure') => {
+    const handleSocialLogin = async (provider: 'google' | 'github') => {
         setError('');
         setLoading(true);
         try {
@@ -152,15 +152,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                             className="w-full flex items-center justify-center gap-3 py-2.5 border border-border rounded-lg hover:bg-muted transition-all text-xs font-semibold text-foreground active:scale-[0.98] disabled:opacity-50"
                         >
                             <Icons.GitHub className="w-4 h-4" /> Continue with GitHub
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => handleSocialLogin('azure')}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 py-2.5 border border-border rounded-lg hover:bg-muted transition-all text-xs font-semibold text-foreground active:scale-[0.98] disabled:opacity-50"
-                        >
-                            <Icons.Microsoft className="w-4 h-4" /> Continue with Microsoft
                         </button>
                     </div>
 
