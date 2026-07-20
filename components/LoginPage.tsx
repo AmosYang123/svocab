@@ -13,7 +13,7 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'login' }) => {
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(initialMode === 'login');
-    const [username, setUsername] = useState('');
+    const [emailOrUser, setEmailOrUser] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
         setError('');
     }, [initialMode]);
 
-    const handleSocialLogin = async (provider: 'google' | 'github') => {
+    const handleSocialLogin = async (provider: 'google' | 'github' | 'azure') => {
         setError('');
         setLoading(true);
         try {
@@ -44,42 +44,70 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
             }
             // Supabase handles OAuth redirection automatically
         } catch {
-            setError('Social login failed. Please ensure Supabase keys are configured in your Vercel project.');
+            setError('Social sign-in failed. Please verify provider settings in your Supabase dashboard.');
             setLoading(false);
         }
     };
 
-    const handleLocalSubmit = async (e: React.FormEvent) => {
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
-        try {
-            hybridService.setStorageMode('local');
+        const isEmail = emailOrUser.includes('@');
+        const isCloudAvailable = cloudService.isConfigured();
 
-            if (isLogin) {
-                const res = await authService.login(username, password);
-                if (res.success && res.user) {
-                    onLoginSuccess(res.user.username);
+        try {
+            if (isCloudAvailable && isEmail) {
+                hybridService.setStorageMode('hybrid');
+                if (isLogin) {
+                    const res = await cloudService.loginWithEmail(emailOrUser, password);
+                    if (res.success && res.username) {
+                        onLoginSuccess(res.username);
+                    } else {
+                        setError(res.message || 'Login failed.');
+                    }
                 } else {
-                    setError(res.message || 'Local login failed. Invalid username or password.');
+                    if (password !== confirmPassword) {
+                        setError('Passwords do not match.');
+                        setLoading(false);
+                        return;
+                    }
+                    const res = await cloudService.registerWithEmail(emailOrUser, password);
+                    if (res.success && res.username) {
+                        onLoginSuccess(res.username);
+                    } else {
+                        setError(res.message || 'Registration failed.');
+                    }
                 }
             } else {
-                if (password !== confirmPassword) {
-                    setError('Passwords do not match.');
-                    setLoading(false);
-                    return;
-                }
+                // Local Device Account Fallback
+                hybridService.setStorageMode('local');
 
-                const res = await authService.register(username, password);
-                if (res.success && res.user) {
-                    onLoginSuccess(res.user);
+                if (isLogin) {
+                    const res = await authService.login(emailOrUser, password);
+                    if (res.success && res.user) {
+                        onLoginSuccess(res.user.username);
+                    } else {
+                        setError(res.message || 'Local sign-in failed. Invalid username or password.');
+                    }
                 } else {
-                    setError(res.message || 'Registration failed.');
+                    if (password !== confirmPassword) {
+                        setError('Passwords do not match.');
+                        setLoading(false);
+                        return;
+                    }
+
+                    const res = await authService.register(emailOrUser, password);
+                    if (res.success && res.user) {
+                        onLoginSuccess(res.user);
+                    } else {
+                        setError(res.message || 'Registration failed.');
+                    }
                 }
             }
         } catch {
-            setError('An unexpected error occurred during local sign in.');
+            setError('An unexpected error occurred during sign in.');
         } finally {
             setLoading(false);
         }
@@ -103,9 +131,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                 {/* Main Single Card */}
                 <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-5">
                     {/* Social Logins */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                         <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground text-center mb-1">
-                            Cloud Sync Sign In
+                            OAuth Single Sign-On
                         </p>
 
                         <button
@@ -125,28 +153,37 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                         >
                             <Icons.GitHub className="w-4 h-4" /> Continue with GitHub
                         </button>
+
+                        <button
+                            type="button"
+                            onClick={() => handleSocialLogin('azure')}
+                            disabled={loading}
+                            className="w-full flex items-center justify-center gap-3 py-2.5 border border-border rounded-lg hover:bg-muted transition-all text-xs font-semibold text-foreground active:scale-[0.98] disabled:opacity-50"
+                        >
+                            <Icons.Microsoft className="w-4 h-4" /> Continue with Microsoft
+                        </button>
                     </div>
 
                     {/* Divider */}
                     <div className="relative flex items-center gap-3">
                         <div className="flex-1 h-px bg-border"></div>
-                        <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest">or local device</span>
+                        <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest">or email & password</span>
                         <div className="flex-1 h-px bg-border"></div>
                     </div>
 
-                    {/* Local Form */}
-                    <form onSubmit={handleLocalSubmit} className="space-y-3">
+                    {/* Email / Username Form */}
+                    <form onSubmit={handleFormSubmit} className="space-y-3">
                         <div className="space-y-1">
                             <label className="block text-[10px] font-mono uppercase tracking-widest text-muted-foreground ml-1">
-                                {isLogin ? 'Username' : 'Choose Username'}
+                                Email Address or Username
                             </label>
                             <input
                                 type="text"
                                 required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                value={emailOrUser}
+                                onChange={(e) => setEmailOrUser(e.target.value)}
                                 className="w-full bg-background border border-input rounded-lg py-2 px-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring transition-all text-xs font-medium"
-                                placeholder="Enter username"
+                                placeholder="name@example.com or username"
                             />
                         </div>
 
@@ -194,7 +231,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                             disabled={loading}
                             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 rounded-lg transition-all text-xs uppercase tracking-wider shadow-sm mt-1"
                         >
-                            {loading ? 'Processing...' : (isLogin ? 'Sign In Locally' : 'Create Local Account')}
+                            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
                         </button>
 
                         <div className="text-center pt-1">
@@ -203,7 +240,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                                 onClick={() => { setIsLogin(!isLogin); setError(''); }}
                                 className="text-xs text-primary hover:underline font-medium"
                             >
-                                {isLogin ? "Need a local account? Sign up" : "Already have a local account? Sign in"}
+                                {isLogin ? "Need an account? Sign up" : "Already have an account? Sign in"}
                             </button>
                         </div>
                     </form>

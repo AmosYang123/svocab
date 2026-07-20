@@ -59,6 +59,85 @@ export const cloudService = {
     // ----------------
     // Authentication
     // ----------------
+    async registerWithEmail(email: string, password: string): Promise<CloudAuthResult> {
+        if (!isSupabaseConfigured) {
+            return { success: false, message: 'Cloud service not configured.' };
+        }
+
+        try {
+            const normalizedEmail = email.trim().toLowerCase();
+            const username = normalizedEmail.split('@')[0];
+
+            const authResult = await withTimeout(supabase.auth.signUp({
+                email: normalizedEmail,
+                password,
+                options: {
+                    data: { username }
+                }
+            }));
+            const { data, error } = authResult;
+
+            if (error) {
+                return { success: false, message: error.message };
+            }
+
+            if (!data.user) {
+                return { success: false, message: 'Registration failed.' };
+            }
+
+            return {
+                success: true,
+                message: 'Account created successfully!',
+                userId: data.user.id,
+                username
+            };
+        } catch (error: any) {
+            return { success: false, message: error?.message || 'Email registration failed.' };
+        }
+    },
+
+    async loginWithEmail(email: string, password: string): Promise<CloudAuthResult> {
+        if (!isSupabaseConfigured) {
+            return { success: false, message: 'Cloud service not configured.' };
+        }
+
+        try {
+            const normalizedEmail = email.trim().toLowerCase();
+
+            const signInResult = await withTimeout(supabase.auth.signInWithPassword({
+                email: normalizedEmail,
+                password,
+            }));
+            const { data, error } = signInResult;
+
+            if (error) {
+                if (error.message.includes('Invalid login credentials')) {
+                    return { success: false, message: 'Invalid email or password.' };
+                }
+                return { success: false, message: error.message };
+            }
+
+            if (!data.user) {
+                return { success: false, message: 'Login failed.' };
+            }
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', data.user.id)
+                .single();
+
+            return {
+                success: true,
+                message: 'Login successful!',
+                userId: data.user.id,
+                username: profile?.username || normalizedEmail.split('@')[0],
+            };
+        } catch (error: any) {
+            return { success: false, message: error?.message || 'Login failed. Please try again.' };
+        }
+    },
+
     async register(username: string, password: string): Promise<CloudAuthResult> {
         if (!isSupabaseConfigured) {
             return { success: false, message: 'Cloud service not configured.' };
