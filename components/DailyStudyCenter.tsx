@@ -438,34 +438,30 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                         </div>
                     </div>
 
-                    {!notifSupported ? (
-                        <div className="bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 text-[10px] font-bold p-3.5 rounded-2xl border border-amber-100 dark:border-amber-900 flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>System notifications are not supported in this browser environment.</span>
-                        </div>
-                    ) : (
-                        <div className="space-y-4 pt-1">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                                    Notification Alert Status
-                                </span>
-                                <button
-                                    onClick={handleToggleReminder}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        reminderEnabled ? 'bg-primary' : 'bg-muted'
+                    <div className="space-y-4 pt-1">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-foreground">
+                                Notification Alert Status
+                            </span>
+                            <button
+                                onClick={handleToggleReminder}
+                                aria-label="Toggle daily study reminder"
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                    reminderEnabled ? 'bg-primary' : 'bg-muted'
+                                }`}
+                            >
+                                <span
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                        reminderEnabled ? 'translate-x-5' : 'translate-x-0'
                                     }`}
-                                >
-                                    <span
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                            reminderEnabled ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
+                                />
+                            </button>
+                        </div>
 
-                            {reminderEnabled && (
-                                <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 animate-in slide-in-from-top-2 duration-200">
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {reminderEnabled && (
+                            <div className="space-y-3 border-t border-border pt-3 animate-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-foreground">
                                         Preferred Reminder Time
                                     </span>
                                     <input
@@ -475,9 +471,16 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                                         className="bg-background border border-input px-3 py-1.5 rounded-lg text-xs font-mono text-foreground focus:outline-none focus:border-ring cursor-pointer"
                                     />
                                 </div>
-                            )}
-                        </div>
-                    )}
+
+                                <div className="bg-muted/60 p-3 rounded-xl border border-border flex items-start gap-2 text-[10px] text-muted-foreground font-mono">
+                                    <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                    <span>
+                                        iPhone/iOS Note: To get native pop-up notifications, tap <strong>Share (↑)</strong> in Safari and select <strong>Add to Home Screen</strong>.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

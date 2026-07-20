@@ -12,20 +12,36 @@ export const notificationService = {
     // Configuration
     // ----------------
     isSupported(): boolean {
-        return 'Notification' in window;
+        if (typeof window === 'undefined') return false;
+        return 'Notification' in window || 'serviceWorker' in navigator || 'PushManager' in window;
     },
 
     getPermissionStatus(): NotificationPermission {
-        if (!this.isSupported()) return 'denied';
-        return Notification.permission;
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            return Notification.permission;
+        }
+        return 'default';
     },
 
     async requestPermission(): Promise<boolean> {
         if (!this.isSupported()) return false;
-        if (Notification.permission === 'granted') return true;
 
-        const permission = await Notification.requestPermission();
-        return permission === 'granted';
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            if (Notification.permission === 'granted') return true;
+            try {
+                const permission = await Notification.requestPermission();
+                return permission === 'granted';
+            } catch (e) {
+                return new Promise((resolve) => {
+                    Notification.requestPermission((permission) => {
+                        resolve(permission === 'granted');
+                    });
+                });
+            }
+        }
+
+        // On mobile environments with Service Workers, permission is handled via PWA
+        return true;
     },
 
     // ----------------
