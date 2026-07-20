@@ -59,16 +59,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
         setLoading(true);
 
         try {
-            // Configure storage mode preference - Quick accounts always use hybrid/cloud if available
-            if (useCloud) {
-                if (cloudService.isConfigured()) {
-                    // Logic handled in cloudService
-                } else {
-                    setError('Cloud Sync is not configured. Please add keys to your Supabase project or use Local Only.');
-                    setLoading(false);
-                    return;
-                }
-            }
+            // Set storage mode preference
+            hybridService.setStorageMode(useCloud ? 'hybrid' : 'local');
 
             if (isLogin) {
                 const res = await hybridService.login(username, password);
@@ -194,6 +186,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                     </div>
 
                     {/* Quick Account Warning removed */}
+
+                    {useCloud && !isCloudAvailable && (
+                        <div className="mb-5 bg-amber-50 border border-amber-100 rounded-lg p-3 flex items-start gap-2.5">
+                            <Icons.Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <p className="text-[10px] leading-relaxed text-amber-800 font-medium">
+                                <strong className="block text-amber-900 mb-0.5">Offline / Local Mode Active</strong>
+                                Supabase project keys are not configured. Your account and progress will be saved locally on this device.
+                            </p>
+                        </div>
+                    )}
 
                     {!useCloud && (
                         <div className="mb-5 bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-2.5">
