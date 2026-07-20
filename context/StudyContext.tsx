@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { Word, WordStatusType, StudyMode, MarkedWordsMap, WordStatusMap, StudySet, ThemeMode } from '../types';
 import { hybridService } from '../services/hybridService';
-import { VOCAB_LIST } from '../data/vocab';
-import { SAT_VOCAB_LIST } from '../data/sat_vocab';
+import { PLACEHOLDER_VOCAB as VOCAB_LIST } from '../data/vocab';
+import { SAT_VOCAB as SAT_VOCAB_LIST } from '../data/sat_vocab';
 import { seededShuffle, generateUUID } from '../utils';
 
 interface StudyContextType {
@@ -78,14 +78,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 setTheme(prefs.theme || 'dark');
                 setShowDefaultVocab(prefs.showDefaultVocab ?? true);
                 setShowSatVocab(prefs.showSatVocab ?? false);
+                setIsPro(prefs.isPro ?? false);
                 if (prefs.lastStudyMode) setStudyModeState(prefs.lastStudyMode as StudyMode);
                 if (prefs.lastActiveSetId) setActiveSetId(prefs.lastActiveSetId);
                 if (prefs.lastCardIndex) setCurrentIndex(prefs.lastCardIndex);
-            }
-
-            const currentUser = await hybridService.getCurrentUser();
-            if (currentUser) {
-                setIsPro(currentUser.isPro);
             }
         } catch (e) {
             console.error("StudyContext: loadUserData error", e);

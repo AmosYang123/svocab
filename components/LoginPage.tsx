@@ -94,7 +94,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                 if (isLogin) {
                     const res = await authService.login(emailOrUser, password);
                     if (res.success && res.user) {
-                        onLoginSuccess(res.user.username);
+                        onLoginSuccess(res.user);
                     } else {
                         setError(res.message || 'Local sign-in failed. Invalid username or password.');
                     }

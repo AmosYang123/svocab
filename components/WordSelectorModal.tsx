@@ -94,57 +94,57 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
 
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
-      case 'hard': return 'text-red-500 bg-red-50 border-red-100';
-      case 'medium': return 'text-amber-500 bg-amber-50 border-amber-100';
-      case 'easy': return 'text-emerald-500 bg-emerald-50 border-emerald-100';
-      case 'basic': return 'text-indigo-400 bg-indigo-50 border-indigo-100';
-      default: return 'text-gray-400 bg-gray-50 border-gray-100';
+      case 'hard': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/40';
+      case 'medium': return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/40';
+      case 'easy': return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/40';
+      case 'basic': return 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/40';
+      default: return 'text-muted-foreground bg-muted border-border';
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] bg-background text-foreground flex flex-col animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
         <div className="flex-1">
           <input
             type="text"
-            className="text-2xl font-black text-indigo-900 bg-transparent border-b-4 border-indigo-600 focus:border-indigo-800 outline-none w-full max-w-sm px-2 py-1 transition-colors"
+            className="text-2xl font-black text-foreground bg-transparent border-b-4 border-primary focus:border-primary/80 outline-none w-full max-w-sm px-2 py-1 transition-colors placeholder:text-muted-foreground/50"
             value={setName}
             onChange={(e) => setSetName(e.target.value)}
             placeholder={`Set ${setCount + 1}`}
           />
         </div>
-        <button onClick={onClose} className="p-3 text-gray-400 hover:text-indigo-600 active:scale-95 transition-all">
+        <button onClick={onClose} className="p-3 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg active:scale-95 transition-all">
           <Icons.Close />
         </button>
       </div>
 
       {/* Toolbar */}
-      <div className="px-6 py-6 space-y-4 bg-gray-50 shadow-inner">
+      <div className="px-6 py-6 space-y-4 bg-muted/40 border-b border-border shadow-inner">
         <div className="relative">
-          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
             <Icons.Search />
           </span>
           <input
             type="text"
             placeholder="Search words..."
-            className="w-full bg-white text-gray-900 border-indigo-500 border-2 rounded-lg pl-14 pr-6 py-3 text-base outline-none focus:ring-4 focus:ring-indigo-500/20 shadow-lg placeholder:text-gray-400 font-bold"
+            className="w-full bg-card text-foreground border-primary/40 focus:border-primary border-2 rounded-lg pl-14 pr-6 py-3 text-base outline-none focus:ring-4 focus:ring-primary/20 shadow-sm placeholder:text-muted-foreground font-bold transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <div className={`flex items-center gap-2 bg-white px-4 py-1.5 rounded-lg border-2 shadow-sm transition-all ${errorMessage ? 'border-red-500 animate-shake' : 'border-indigo-100'}`}>
-              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Review Batch #</span>
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className={`relative flex items-center gap-2 bg-card px-4 py-1.5 rounded-lg border-2 shadow-sm transition-all ${errorMessage ? 'border-destructive animate-shake' : 'border-border'}`}>
+              <span className="text-[10px] font-black text-primary uppercase tracking-widest">Review Batch #</span>
               <input
                 type="number"
                 min="1"
                 max={Math.max(1, Math.ceil(reviewWords.length / 10))}
                 id="set-number-input"
-                className="w-14 bg-indigo-50 text-indigo-900 font-black px-2 py-0.5 rounded outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-center text-xs"
+                className="w-14 bg-muted text-foreground font-black px-2 py-0.5 rounded outline-none focus:ring-2 focus:ring-primary transition-all text-center text-xs"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const setNum = parseInt((e.target as HTMLInputElement).value);
@@ -159,14 +159,14 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
                   const setNum = parseInt(input?.value || '0');
                   handleApplyReviewBatch(setNum);
                 }}
-                className="px-3 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-black hover:bg-indigo-700 active:scale-95 transition-all outline-none"
+                className="px-3 py-0.5 bg-primary text-primary-foreground rounded text-[10px] font-black hover:opacity-90 active:scale-95 transition-all outline-none"
               >
                 GO
               </button>
               {errorMessage && (
-                <div className="absolute top-full left-0 mt-3 px-3 py-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-md shadow-lg animate-in fade-in slide-in-from-top-1 duration-200 z-[110] whitespace-nowrap">
+                <div className="absolute top-full left-0 mt-3 px-3 py-1.5 bg-destructive text-destructive-foreground text-[10px] font-black uppercase tracking-widest rounded-md shadow-lg animate-in fade-in slide-in-from-top-1 duration-200 z-[110] whitespace-nowrap">
                   <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                    <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
                     {errorMessage}
                   </div>
                 </div>
@@ -174,7 +174,7 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => { const ns = new Set(selected); filteredVocab.forEach(w => ns.add(w.name)); setSelected(ns); }} className="px-10 py-1.5 bg-indigo-600 text-white rounded-lg text-[11px] font-black shadow-md hover:bg-indigo-700 active:scale-95 transition-all uppercase tracking-widest">SELECT ALL</button>
+              <button onClick={() => { const ns = new Set(selected); filteredVocab.forEach(w => ns.add(w.name)); setSelected(ns); }} className="px-6 py-1.5 bg-primary text-primary-foreground rounded-lg text-[11px] font-black shadow-sm hover:opacity-90 active:scale-95 transition-all uppercase tracking-widest">SELECT ALL</button>
               {lastImportedNames.length > 0 && (
                 <button
                   onClick={() => {
@@ -183,33 +183,33 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
                     setSelected(ns);
                     setSetName(`Import ${new Date().toLocaleDateString()}`);
                   }}
-                  className="px-6 py-1.5 animate-ai-gradient text-white rounded-lg text-[11px] font-black shadow-md active:scale-95 transition-all uppercase tracking-widest flex items-center gap-2"
+                  className="px-6 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-[11px] font-black shadow-sm active:scale-95 transition-all uppercase tracking-widest flex items-center gap-2 hover:opacity-90"
                 >
                   <Icons.Sparkles className="w-4 h-4" /> RECENT IMPORT
                 </button>
               )}
-              <button onClick={() => { const ns = new Set(selected); filteredVocab.forEach(w => ns.delete(w.name)); setSelected(ns); }} className="px-10 py-1.5 bg-gray-200 text-gray-600 rounded-lg text-[11px] font-black shadow-sm hover:bg-gray-300 active:scale-95 transition-all uppercase tracking-widest">CLEAR</button>
+              <button onClick={() => { const ns = new Set(selected); filteredVocab.forEach(w => ns.delete(w.name)); setSelected(ns); }} className="px-6 py-1.5 bg-secondary text-secondary-foreground border border-border rounded-lg text-[11px] font-black shadow-sm hover:bg-muted active:scale-95 transition-all uppercase tracking-widest">CLEAR</button>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer group">
+            <label className="flex items-center gap-2 cursor-pointer group select-none">
               <div
                 onClick={() => setShowIndicators(!showIndicators)}
-                className={`w-10 h-5 rounded-full transition-colors relative ${showIndicators ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                className={`w-10 h-5 rounded-full transition-colors relative ${showIndicators ? 'bg-primary' : 'bg-muted-foreground/30'}`}
               >
-                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${showIndicators ? 'left-6' : 'left-1'}`} />
+                <div className={`absolute top-1 w-3 h-3 bg-card rounded-full transition-all ${showIndicators ? 'left-6' : 'left-1'}`} />
               </div>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">Show Indicators</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">Show Indicators</span>
             </label>
           </div>
 
-          <div className="text-indigo-600 font-black text-[12px] tracking-[0.2em] uppercase bg-indigo-50 px-6 py-1.5 rounded-full border border-indigo-100">
+          <div className="text-primary font-black text-[12px] tracking-[0.2em] uppercase bg-primary/10 px-6 py-1.5 rounded-full border border-primary/20">
             {selected.size} WORDS SELECTED
           </div>
         </div>
       </div>
 
       {/* Grid */}
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-white">
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-background">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {filteredVocab.slice(0, visibleCount).map((word, idx) => {
             const status = wordStatuses[word.name];
@@ -219,14 +219,14 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
               <div
                 key={word.name}
                 onClick={(e) => handleToggle(word.name, idx, e.shiftKey)}
-                className={`relative p-4 rounded-lg border-2 transition-all cursor-pointer shadow-sm ${selected.has(word.name) ? 'border-indigo-600 bg-indigo-50 scale-[1.02]' : 'border-gray-50 bg-white hover:border-indigo-200'}`}
+                className={`relative p-4 rounded-lg border-2 transition-all cursor-pointer shadow-xs ${selected.has(word.name) ? 'border-primary bg-primary/10 shadow-sm scale-[1.02]' : 'border-border bg-card hover:border-primary/40'}`}
               >
                 {showIndicators && (
                   <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                     {/* Status Badge */}
-                    <div className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${status === 'mastered' ? 'bg-green-50 text-green-600 border-green-100' :
-                      status === 'review' ? 'bg-orange-50 text-orange-600 border-orange-100' :
-                        'bg-gray-50 text-gray-400 border-gray-100'
+                    <div className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${status === 'mastered' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' :
+                      status === 'review' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' :
+                        'bg-muted text-muted-foreground border-border'
                       }`}>
                       {status || 'new'}
                     </div>
@@ -236,12 +236,12 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
                     </div>
                     {/* Flag Badge */}
                     {isMarked && (
-                      <div className="text-[8px] bg-red-100 text-red-600 px-1 py-0.5 rounded">FLAGGED</div>
+                      <div className="text-[8px] bg-destructive/10 text-destructive border border-destructive/30 px-1 py-0.5 rounded font-black">FLAGGED</div>
                     )}
                   </div>
                 )}
-                <div className="font-black text-indigo-900 text-lg truncate mb-1 italic tracking-tighter">{word.name}</div>
-                <p className="text-[11px] text-gray-400 truncate opacity-70 font-medium">{word.definition}</p>
+                <div className="font-black text-foreground text-lg truncate mb-1 italic tracking-tighter">{word.name}</div>
+                <p className="text-[11px] text-muted-foreground truncate opacity-80 font-medium">{word.definition}</p>
               </div>
             );
           })}
@@ -249,14 +249,15 @@ const WordSelectorModal: React.FC<WordSelectorModalProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t bg-gray-50 flex justify-center shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+      <div className="p-6 border-t border-border bg-card flex justify-center shadow-md">
         <button
           onClick={() => {
             if (selected.size > 0) {
               onSave(setName, Array.from(selected));
             }
           }}
-          className="w-full max-w-md py-3 px-16 bg-indigo-600 text-white rounded-lg font-black text-base hover:bg-indigo-700 shadow-xl active:scale-[0.98] transition-all uppercase tracking-[0.3em]"
+          disabled={selected.size === 0}
+          className="w-full max-w-md py-3 px-16 bg-primary text-primary-foreground rounded-lg font-black text-base hover:opacity-90 shadow-xl active:scale-[0.98] transition-all uppercase tracking-[0.3em] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           CREATE GROUP
         </button>
