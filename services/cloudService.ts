@@ -176,7 +176,7 @@ export const cloudService = {
         try {
             const normalizedUsername = username.trim().toLowerCase();
             // Generate fake email from username for Supabase auth
-            const fakeEmail = `${normalizedUsername}@gmail.com`;
+            const fakeEmail = `${normalizedUsername}@vocab.internal`;
 
             // Check if username is already taken
             const { data: existingProfile } = await withTimeout(supabase
@@ -234,7 +234,7 @@ export const cloudService = {
 
         try {
             const normalizedUsername = username.trim().toLowerCase();
-            const fakeEmail = `${normalizedUsername}@gmail.com`;
+            const fakeEmail = `${normalizedUsername}@vocab.internal`;
 
             const signInResult = await withTimeout(supabase.auth.signInWithPassword({
                 email: fakeEmail,
@@ -457,8 +457,9 @@ export const cloudService = {
                 .eq('user_id', userId);
 
             if (data.savedSets && data.savedSets.length > 0) {
+                const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
                 const setInserts = data.savedSets.map(set => ({
-                    id: set.id,
+                    id: uuidRegex.test(set.id) ? set.id : crypto.randomUUID(),
                     user_id: userId,
                     name: set.name,
                     word_names: set.wordNames,
@@ -469,7 +470,7 @@ export const cloudService = {
                     .insert(setInserts);
 
                 if (setsError) {
-                    // Error saving study sets
+                    console.error('[CloudService] Error saving study sets:', setsError.message);
                 }
             }
 

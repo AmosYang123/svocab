@@ -98,8 +98,17 @@ export default function SidebarLayout({
                         </div>
                     )}
                     <button
+                        onClick={onShowSettings}
+                        aria-label="Open Settings"
+                        className="p-1.5 border border-border hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                        title="Settings & Sync"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
+                    <button
                         onClick={() => setIsMobileOpen(true)}
-                        className="p-1.5 border border-border hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                        aria-label="Open Navigation Menu"
+                        className="p-1.5 border border-border hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         <Menu className="w-5 h-5" />
                     </button>
@@ -119,7 +128,7 @@ export default function SidebarLayout({
                 {/* Primary Action Button ("+ Quick Create" / "+ Daily Practice" style) */}
                 <button
                     onClick={() => navigate('/daily')}
-                    className="w-full mb-6 py-2.5 px-4 bg-primary text-primary-foreground text-xs font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-opacity active:scale-[0.98]"
+                    className="w-full mb-6 py-2.5 px-4 bg-primary text-primary-foreground text-xs font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm hover:opacity-90 transition-opacity active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <Plus className="w-4 h-4 stroke-[2.5]" />
                     <span>Start Daily Practice</span>
@@ -138,6 +147,7 @@ export default function SidebarLayout({
                                 <button
                                     key={item.path}
                                     onClick={() => navigate(item.path)}
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={`w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all ${
                                         isActive
                                             ? 'bg-secondary text-foreground font-semibold shadow-xs'
@@ -199,14 +209,16 @@ export default function SidebarLayout({
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={toggleTheme}
-                                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                aria-label="Toggle theme mode"
+                                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                                 title="Toggle Theme"
                             >
                                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                             </button>
                             <button
                                 onClick={onLogout}
-                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                aria-label="Log Out"
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                                 title="Log Out"
                             >
                                 <LogOut className="w-4 h-4" />
@@ -261,7 +273,49 @@ export default function SidebarLayout({
                                     </button>
                                 );
                             })}
+                            <div className="pt-2 border-t border-border mt-2">
+                                <button
+                                    onClick={() => {
+                                        setIsMobileOpen(false);
+                                        onShowSettings();
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded-xl transition-all"
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    <span>Settings & Sync</span>
+                                </button>
+                            </div>
                         </nav>
+
+                        {/* Mobile Drawer Footer */}
+                        <div className="pt-3 border-t border-border">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-7 h-7 bg-secondary border border-border flex items-center justify-center text-xs font-semibold text-foreground rounded-full shrink-0">
+                                        {currentUser?.slice(0, 2).toUpperCase() || 'GU'}
+                                    </div>
+                                    <span className="text-xs font-semibold text-foreground truncate">
+                                        {currentUser || 'Guest User'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={toggleTheme}
+                                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+                                        title="Toggle Theme"
+                                    >
+                                        {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                    </button>
+                                    <button
+                                        onClick={onLogout}
+                                        className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                                        title="Log Out"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

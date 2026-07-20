@@ -306,41 +306,41 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             {/* Cloud Sync */}
                             {isCloudConfigured && (
                                 <div className="space-y-3">
-                                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                                    <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-1 flex items-center gap-2">
                                         <Icons.Cloud /> Sync Status
                                     </h3>
 
                                     {storageMode === 'local' ? (
-                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                        <div className="bg-card border border-border rounded-xl p-4">
                                             <div className="flex items-start gap-3">
-                                                <div className="text-blue-500 mt-0.5"><Icons.Info /></div>
+                                                <div className="text-primary mt-0.5"><Icons.Info /></div>
                                                 <div>
-                                                    <p className="text-sm text-blue-900 mb-3 font-medium leading-relaxed">
+                                                    <p className="text-xs text-muted-foreground mb-3 font-medium leading-relaxed">
                                                         Your vocabulary progress is currently saved only on this device. Enable cloud sync to access your data from anywhere.
                                                     </p>
                                                     <button
                                                         onClick={handleSyncToCloud}
                                                         disabled={loading}
-                                                        className="inline-flex items-center gap-2 py-2 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-xs uppercase tracking-wider shadow-sm"
+                                                        className="inline-flex items-center gap-2 py-2 px-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 transition-opacity text-xs uppercase tracking-wider shadow-sm"
                                                     >
-                                                        {loading ? 'Syncing...' : <><Icons.Upload /> Sync Process to Cloud</>}
+                                                        {loading ? 'Syncing...' : <><Icons.Upload /> Sync Progress to Cloud</>}
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-center justify-between">
+                                        <div className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <span className="relative flex h-2.5 w-2.5">
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                                                 </span>
-                                                <span className="text-sm font-bold text-green-800">Sync Active</span>
+                                                <span className="text-xs font-semibold text-foreground">Sync Active</span>
                                             </div>
                                             <button
                                                 onClick={handleSyncToCloud}
                                                 disabled={loading}
-                                                className="text-xs font-bold text-green-700 hover:text-green-900 underline flex items-center gap-1"
+                                                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
                                             >
                                                 {loading ? 'Syncing...' : <><Icons.Check /> Force Sync</>}
                                             </button>
@@ -351,13 +351,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
                             {/* Data Backup */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1 flex items-center gap-2">
+                                <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest px-1 flex items-center gap-2">
                                     <Icons.Database /> Data Management
                                 </h3>
 
                                 {/* Export Options */}
                                 <div className="space-y-2">
-                                    <p className="text-xs text-gray-500 px-1 font-medium">Export Backups</p>
+                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider px-1">Export Backups</p>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             onClick={async () => {
@@ -379,12 +379,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 }
                                             }}
                                             disabled={loading}
-                                            className="group flex flex-col items-center justify-center gap-2 p-4 bg-white hover:bg-indigo-50 text-indigo-600 rounded-xl transition-all border border-gray-200 hover:border-indigo-200 shadow-sm disabled:opacity-50"
+                                            className="group flex flex-col items-center justify-center gap-2 p-4 bg-card hover:bg-muted text-foreground rounded-xl transition-all border border-border shadow-xs disabled:opacity-50"
                                         >
-                                            <div className="p-2 bg-indigo-50 group-hover:bg-indigo-100 rounded-full transition-colors">
+                                            <div className="p-2.5 bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary rounded-full transition-colors">
                                                 <Icons.Download />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wide">My Data</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider">My Data</span>
                                         </button>
 
                                         <button
@@ -407,45 +407,45 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 }
                                             }}
                                             disabled={loading}
-                                            className="group flex flex-col items-center justify-center gap-2 p-4 bg-white hover:bg-emerald-50 text-emerald-600 rounded-xl transition-all border border-gray-200 hover:border-emerald-200 shadow-sm disabled:opacity-50"
+                                            className="group flex flex-col items-center justify-center gap-2 p-4 bg-card hover:bg-muted text-foreground rounded-xl transition-all border border-border shadow-xs disabled:opacity-50"
                                         >
-                                            <div className="p-2 bg-emerald-50 group-hover:bg-emerald-100 rounded-full transition-colors">
+                                            <div className="p-2.5 bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary rounded-full transition-colors">
                                                 <Icons.Database />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wide">Full DB</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider">Full DB</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Import Personal Words */}
                                 <div className="space-y-2 pt-2">
-                                    <p className="text-xs text-gray-500 px-1 font-medium italic">Custom Vocabulary</p>
+                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider px-1">Custom Vocabulary</p>
                                     <button
                                         onClick={() => {
                                             onClose();
                                             onShowImport();
                                         }}
-                                        className="w-full group flex flex-col items-center justify-center gap-2 p-5 bg-white hover:bg-indigo-50 text-indigo-600 rounded-xl transition-all border border-gray-200 hover:border-indigo-200 shadow-sm"
+                                        className="w-full group flex flex-col items-center justify-center gap-2 p-4 bg-card hover:bg-muted text-foreground rounded-xl transition-all border border-border shadow-xs"
                                     >
-                                        <div className="p-3 bg-indigo-50 group-hover:bg-indigo-100 rounded-full transition-colors">
-                                            <Icons.Plus className="w-5 h-5" />
+                                        <div className="p-2.5 bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary rounded-full transition-colors">
+                                            <Icons.Plus className="w-4 h-4" />
                                         </div>
                                         <div className="text-center">
-                                            <div className="text-[11px] font-black uppercase tracking-widest">Import New Vocabulary</div>
-                                            <div className="text-[9px] font-medium opacity-60">Add words via document, file, or paste</div>
+                                            <div className="text-[10px] font-semibold uppercase tracking-wider">Import New Vocabulary</div>
+                                            <div className="text-[10px] text-muted-foreground font-mono">Add words via document, file, or paste</div>
                                         </div>
                                     </button>
                                 </div>
 
                                 {/* Import Options */}
                                 <div className="space-y-2 pt-2">
-                                    <p className="text-xs text-gray-500 px-1 font-medium">Restore Data</p>
+                                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider px-1">Restore Data</p>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <label className="group flex flex-col items-center justify-center gap-2 p-4 bg-white hover:bg-violet-50 text-violet-600 rounded-xl transition-all border border-gray-200 hover:border-violet-200 shadow-sm cursor-pointer">
-                                            <div className="p-2 bg-violet-50 group-hover:bg-violet-100 rounded-full transition-colors">
+                                        <label className="group flex flex-col items-center justify-center gap-2 p-4 bg-card hover:bg-muted text-foreground rounded-xl transition-all border border-border shadow-xs cursor-pointer">
+                                            <div className="p-2.5 bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary rounded-full transition-colors">
                                                 <Icons.Upload />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wide">Import</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider">Import</span>
                                             <input
                                                 type="file"
                                                 className="hidden"
@@ -478,11 +478,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                             />
                                         </label>
 
-                                        <label className="group flex flex-col items-center justify-center gap-2 p-4 bg-white hover:bg-amber-50 text-amber-600 rounded-xl transition-all border border-gray-200 hover:border-amber-200 shadow-sm cursor-pointer">
-                                            <div className="p-2 bg-amber-50 group-hover:bg-amber-100 rounded-full transition-colors">
+                                        <label className="group flex flex-col items-center justify-center gap-2 p-4 bg-card hover:bg-muted text-foreground rounded-xl transition-all border border-border shadow-xs cursor-pointer">
+                                            <div className="p-2.5 bg-muted group-hover:bg-primary/10 text-muted-foreground group-hover:text-primary rounded-full transition-colors">
                                                 <Icons.Wrench />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wide">Merge</span>
+                                            <span className="text-[10px] font-semibold uppercase tracking-wider">Merge</span>
                                             <input
                                                 type="file"
                                                 className="hidden"

@@ -241,6 +241,7 @@ const Flashcard: React.FC<FlashcardProps> = memo(({ word, showDefinition, onTogg
       {/* Pronunciation Button - Bottom Right */}
       <button
         onClick={handleSpeak}
+        aria-label={`Listen to pronunciation for ${word.name}`}
         className={`absolute bottom-6 right-8 z-20 p-2.5 border transition-all rounded-xl ${isSpeaking
           ? 'bg-primary text-primary-foreground border-primary animate-pulse'
           : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
