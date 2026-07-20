@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   is_pro BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_pro BOOLEAN DEFAULT false;
 
 -- 2. User Word Statuses (Mastered / Review)
 CREATE TABLE IF NOT EXISTS public.user_word_statuses (
