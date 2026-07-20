@@ -16,8 +16,8 @@ import DailyStudyCenter from './components/DailyStudyCenter';
 import DailyExerciseFlow from './components/DailyExerciseFlow';
 import { notificationService } from './services/notificationService';
 
+import SettingsModal from './components/SettingsModal';
 const TestInterface = lazy(() => import('./components/TestInterface'));
-const SettingsModal = lazy(() => import('./components/SettingsModal'));
 const LearnSession = lazy(() => import('./components/LearnSession'));
 const LazyWordSelectorModal = lazy(() => import('./components/WordSelectorModal'));
 const ImportWordsModal = lazy(() => import('./components/ImportWordsModal'));

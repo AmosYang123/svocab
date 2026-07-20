@@ -65,8 +65,8 @@ interface MainDashboardProps {
     showSatVocab: boolean;
     onUpdatePreferences: (theme: ThemeMode, showDefault: boolean, showSat?: boolean) => void;
     onUpdateTheme: (theme: ThemeMode) => void; // Keeping for backward compatibility or simple theme toggle if needed, but switching to onUpdatePreferences
-    LazyWordSelectorModal: React.LazyExoticComponent<any>;
-    SettingsModal: React.LazyExoticComponent<any>;
+    LazyWordSelectorModal: React.ComponentType<any>;
+    SettingsModal: React.ComponentType<any>;
     ImportWordsModal: React.LazyExoticComponent<any>;
     PaymentModal: React.LazyExoticComponent<any>;
     showPayment: boolean;
