@@ -54,14 +54,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
         setError('');
         setLoading(true);
 
-        const isEmail = emailOrUser.includes('@');
+        const rawInput = emailOrUser.trim().toLowerCase();
+        const targetEmail = rawInput.includes('@') ? rawInput : `${rawInput}@vocab.app`;
         const isCloudAvailable = cloudService.isConfigured();
 
         try {
-            if (isCloudAvailable && isEmail) {
+            if (isCloudAvailable) {
                 hybridService.setStorageMode('hybrid');
                 if (isLogin) {
-                    const res = await cloudService.loginWithEmail(emailOrUser, password);
+                    const res = await cloudService.loginWithEmail(targetEmail, password);
                     if (res.success && res.username) {
                         if (res.userId) {
                             hybridService.setCloudUserId(res.userId);
@@ -76,7 +77,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                         setLoading(false);
                         return;
                     }
-                    const res = await cloudService.registerWithEmail(emailOrUser, password);
+                    const res = await cloudService.registerWithEmail(targetEmail, password);
                     if (res.success && res.username) {
                         if (res.userId) {
                             hybridService.setCloudUserId(res.userId);

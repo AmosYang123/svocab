@@ -59,6 +59,36 @@ export const cloudService = {
     // ----------------
     // Authentication
     // ----------------
+    async ensureUserProfile(userId: string, emailOrUsername: string): Promise<string> {
+        if (!isSupabaseConfigured) return emailOrUsername.split('@')[0];
+        try {
+            const cleanUsername = emailOrUsername.includes('@')
+                ? emailOrUsername.split('@')[0].toLowerCase().replace(/[^a-z0-9._]/g, '')
+                : emailOrUsername.toLowerCase().replace(/[^a-z0-9._]/g, '');
+
+            const finalUsername = cleanUsername || 'user';
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (profile?.username) {
+                return profile.username;
+            }
+
+            // Insert profile record explicitly if trigger didn't catch it
+            await supabase
+                .from('profiles')
+                .upsert({ id: userId, username: finalUsername }, { onConflict: 'id' });
+
+            return finalUsername;
+        } catch {
+            return emailOrUsername.split('@')[0];
+        }
+    },
+
     async registerWithEmail(email: string, password: string): Promise<CloudAuthResult> {
         if (!isSupabaseConfigured) {
             return { success: false, message: 'Cloud service not configured.' };
@@ -85,11 +115,14 @@ export const cloudService = {
                 return { success: false, message: 'Registration failed.' };
             }
 
+            // Ensure profile exists in profiles table
+            const finalUsername = await this.ensureUserProfile(data.user.id, normalizedEmail);
+
             return {
                 success: true,
                 message: 'Account created successfully!',
                 userId: data.user.id,
-                username
+                username: finalUsername
             };
         } catch (error: any) {
             return { success: false, message: error?.message || 'Email registration failed.' };
@@ -121,17 +154,14 @@ export const cloudService = {
                 return { success: false, message: 'Login failed.' };
             }
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('username')
-                .eq('id', data.user.id)
-                .single();
+            // Ensure profile exists in profiles table
+            const finalUsername = await this.ensureUserProfile(data.user.id, normalizedEmail);
 
             return {
                 success: true,
                 message: 'Login successful!',
                 userId: data.user.id,
-                username: profile?.username || normalizedEmail.split('@')[0],
+                username: finalUsername,
             };
         } catch (error: any) {
             return { success: false, message: error?.message || 'Login failed. Please try again.' };
@@ -288,15 +318,11 @@ export const cloudService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
 
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', user.id)
-            .single();
+        const username = await this.ensureUserProfile(user.id, user.user_metadata?.username || user.email || 'user');
 
         return {
             id: user.id,
-            username: profile?.username || user.email || 'unknown',
+            username,
             isPro: user.user_metadata?.is_pro || false,
         };
     },
