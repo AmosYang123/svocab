@@ -18,7 +18,7 @@ export default function DeckSelectionModal({
     {
       id: 'sat' as const,
       title: 'SAT',
-      subtitle: '~3,000 Words',
+      subtitle: '~1,270 Words',
       description: 'Digital SAT high-frequency vocabulary.',
       icon: GraduationCap,
       showDefault: false,
@@ -27,7 +27,7 @@ export default function DeckSelectionModal({
     {
       id: 'ssat' as const,
       title: 'SSAT',
-      subtitle: '~1,000 Words',
+      subtitle: '~625 Words',
       description: 'Middle & Upper Level SSAT preparation.',
       icon: BookOpen,
       showDefault: true,
@@ -36,7 +36,7 @@ export default function DeckSelectionModal({
     {
       id: 'both' as const,
       title: 'Combined',
-      subtitle: '~4,000 Words',
+      subtitle: '~1,895 Words',
       description: 'All SSAT & SAT words together.',
       icon: Layers,
       showDefault: true,

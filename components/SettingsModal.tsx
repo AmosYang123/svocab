@@ -278,7 +278,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        SSAT (~1,000)
+                                        SSAT (~625)
                                     </button>
                                     <button
                                         onClick={() => onUpdatePreferences(theme, false, true)}
@@ -288,7 +288,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        SAT (~3,000)
+                                        SAT (~1,270)
                                     </button>
                                     <button
                                         onClick={() => onUpdatePreferences(theme, true, true)}
@@ -298,7 +298,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        Both (~4,000)
+                                        Both (~1,895)
                                     </button>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground font-medium px-1">

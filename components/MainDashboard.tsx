@@ -148,7 +148,7 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                     <p className="text-xs text-muted-foreground font-medium mt-0.5">
                         {activeSetId
                             ? <span>Active Group: <span className="text-foreground font-semibold">"{savedSets.find(s => s.id === activeSetId)?.name}"</span></span>
-                            : <span>Active Deck: <span className="text-foreground font-semibold">{showSatVocab && showDefaultVocab ? 'All Combined' : showSatVocab ? 'SAT (3,000)' : 'SSAT (1,000)'}</span> • {studyList.length.toLocaleString()} words</span>
+                            : <span>Active Deck: <span className="text-foreground font-semibold">{showSatVocab && showDefaultVocab ? 'All Combined (1,895)' : showSatVocab ? 'SAT (1,270)' : 'SSAT (625)'}</span> • {studyList.length.toLocaleString()} words</span>
                         }
                     </p>
                 </div>
