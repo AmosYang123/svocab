@@ -278,7 +278,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        SSAT
+                                        SSAT (~1,000)
                                     </button>
                                     <button
                                         onClick={() => onUpdatePreferences(theme, false, true)}
@@ -288,7 +288,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        SAT
+                                        SAT (~3,000)
                                     </button>
                                     <button
                                         onClick={() => onUpdatePreferences(theme, true, true)}
@@ -298,9 +298,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                 : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        Combined
+                                        Both (~4,000)
                                     </button>
                                 </div>
+                                <p className="text-[11px] text-muted-foreground font-medium px-1">
+                                    Switching your vocabulary focus updates your active deck across flashcards, daily lessons, and practice tests.
+                                </p>
                             </div>
 
                             {/* Cloud Sync */}

@@ -29,7 +29,7 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
     useEffect(() => {
         loadData();
         checkNotificationStatus();
-    }, []);
+    }, [vocab]);
 
     const checkNotificationStatus = () => {
         const supported = notificationService.isSupported();

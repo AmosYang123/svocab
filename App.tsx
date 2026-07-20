@@ -17,6 +17,7 @@ import DailyExerciseFlow from './components/DailyExerciseFlow';
 import { notificationService } from './services/notificationService';
 
 import SettingsModal from './components/SettingsModal';
+import DeckSelectionModal from './components/DeckSelectionModal';
 const TestInterface = lazy(() => import('./components/TestInterface'));
 const LearnSession = lazy(() => import('./components/LearnSession'));
 const LazyWordSelectorModal = lazy(() => import('./components/WordSelectorModal'));
@@ -205,6 +206,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showDeckPicker, setShowDeckPicker] = useState(false);
 
   const handleUpgrade = useCallback(async () => {
     setIsPro(true);
@@ -236,6 +238,11 @@ export default function App() {
         if (prefs.lastCardIndex !== undefined) setCurrentIndex(prefs.lastCardIndex);
       }
       setIsPrefsLoaded(true);
+
+      const hasDeckSelection = localStorage.getItem(`ssat_deck_selected_${currentUser.toLowerCase()}`);
+      if (!hasDeckSelection) {
+        setShowDeckPicker(true);
+      }
     }
     loadPreferences();
   }, [currentUser]);
@@ -260,6 +267,7 @@ export default function App() {
     setShowDefaultVocab(newShowDefault);
     const finalShowSat = newShowSat !== undefined ? newShowSat : showSatVocab;
     if (newShowSat !== undefined) setShowSatVocab(newShowSat);
+    setCurrentIndex(0);
 
     if (currentUser) {
       await hybridService.savePreferences(
@@ -268,10 +276,18 @@ export default function App() {
         finalShowSat,
         studyMode,
         activeSetId || undefined,
-        currentIndex
+        0
       );
     }
-  }, [currentUser, showSatVocab, theme, showDefaultVocab, studyMode, activeSetId, currentIndex]);
+  }, [currentUser, showSatVocab, theme, showDefaultVocab, studyMode, activeSetId]);
+
+  const handleSelectDeck = useCallback((showDefault: boolean, showSat: boolean) => {
+    handleUpdatePreferences(theme, showDefault, showSat);
+    if (currentUser) {
+      localStorage.setItem(`ssat_deck_selected_${currentUser.toLowerCase()}`, 'true');
+    }
+    setShowDeckPicker(false);
+  }, [theme, currentUser, handleUpdatePreferences]);
 
   // Save session state periodically or on change
   useEffect(() => {
@@ -735,6 +751,11 @@ export default function App() {
     setCurrentUser(user);
     setStorageMode(hybridService.getStorageMode());
 
+    const hasDeckSelection = localStorage.getItem(`ssat_deck_selected_${user.toLowerCase()}`);
+    if (!hasDeckSelection) {
+      setShowDeckPicker(true);
+    }
+
     // Check for pending upgrade intent
     const params = new URLSearchParams(location.search);
     if (params.get('intent') === 'upgrade') {
@@ -770,6 +791,13 @@ export default function App() {
 
   return (
     <Elements stripe={stripePromise}>
+      {showDeckPicker && currentUser && (
+        <DeckSelectionModal
+          currentShowDefault={showDefaultVocab}
+          currentShowSat={showSatVocab}
+          onSelectDeck={handleSelectDeck}
+        />
+      )}
       <Routes>
         {/* <Route path="/landing" element={
           currentUser ? <Navigate to="/" replace /> : <LandingPage />
