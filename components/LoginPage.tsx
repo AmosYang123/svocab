@@ -63,6 +63,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                 if (isLogin) {
                     const res = await cloudService.loginWithEmail(emailOrUser, password);
                     if (res.success && res.username) {
+                        if (res.userId) {
+                            hybridService.setCloudUserId(res.userId);
+                        }
                         onLoginSuccess(res.username);
                     } else {
                         setError(res.message || 'Login failed.');
@@ -75,6 +78,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
                     }
                     const res = await cloudService.registerWithEmail(emailOrUser, password);
                     if (res.success && res.username) {
+                        if (res.userId) {
+                            hybridService.setCloudUserId(res.userId);
+                        }
                         onLoginSuccess(res.username);
                     } else {
                         setError(res.message || 'Registration failed.');

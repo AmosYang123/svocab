@@ -309,6 +309,7 @@ export default function App() {
     // 2. Listen for Supabase auth changes (for OAuth flow)
     const unsubscribe = cloudService.onAuthStateChange(async (userId) => {
       if (userId) {
+        hybridService.setCloudUserId(userId);
         const cloudUser = await cloudService.getCurrentUser();
         if (cloudUser) {
           setCurrentUser(cloudUser.username);
@@ -319,6 +320,7 @@ export default function App() {
         // Only clear if we were in cloud mode
         const currentMode = hybridService.getStorageMode();
         if (currentMode === 'cloud') {
+          hybridService.setCloudUserId(null);
           setCurrentUser(null);
           setStorageMode('local');
         }
@@ -333,6 +335,7 @@ export default function App() {
   // --- PERSISTENCE: Loading ---
   useEffect(() => {
     async function loadUserData() {
+      setIsDataLoaded(false);
       if (currentUser) {
         // Load user data via hybrid service
         const userData = await hybridService.getUserData();
@@ -358,7 +361,7 @@ export default function App() {
           setCustomVocab(userData.customVocab?.map(w => ({ ...w, name: w.name.toUpperCase() })) || []);
         }
 
-        // Navigation stats from localStorage (still local for now)
+        // Navigation stats
         setStudyMode((localStorage.getItem(`ssat_${currentUser}_mode`) as StudyMode) || 'all');
         setActiveSetId(localStorage.getItem(`ssat_${currentUser}_set_id`));
         const lastIdx = localStorage.getItem(`ssat_${currentUser}_index`);
@@ -374,7 +377,7 @@ export default function App() {
     if (isDataLoaded && currentUser) {
       hybridService.saveUserData({ wordStatuses, markedWords, savedSets, customVocab });
     }
-  }, [wordStatuses, markedWords, savedSets, currentUser, isDataLoaded]);
+  }, [wordStatuses, markedWords, savedSets, customVocab, currentUser, isDataLoaded]);
 
   useEffect(() => {
     if (currentUser) {

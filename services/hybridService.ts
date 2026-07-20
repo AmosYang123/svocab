@@ -212,6 +212,22 @@ export const hybridService = {
         return null;
     },
 
+    setCloudUserId(userId: string | null): void {
+        setCloudUserId(userId);
+    },
+
+    async getActiveCloudUserId(): Promise<string | null> {
+        let userId = getCloudUserId();
+        if (!userId && cloudService.isConfigured()) {
+            const cloudUser = await cloudService.getCurrentUser();
+            if (cloudUser?.id) {
+                userId = cloudUser.id;
+                setCloudUserId(userId);
+            }
+        }
+        return userId;
+    },
+
     // ----------------
     // Data Operations
     // ----------------
@@ -221,19 +237,17 @@ export const hybridService = {
         savedSets: StudySet[];
         customVocab?: Word[];
     } | null> {
-        const mode = getStorageMode();
-        const cloudUserId = getCloudUserId();
-
-        // Try cloud first
-        if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId && cloudService.isConfigured()) {
-            try {
-                const cloudData = await cloudService.getUserData(cloudUserId);
-                if (cloudData) {
-                    return cloudData;
+        if (cloudService.isConfigured()) {
+            const cloudUserId = await this.getActiveCloudUserId();
+            if (cloudUserId) {
+                try {
+                    const cloudData = await cloudService.getUserData(cloudUserId);
+                    if (cloudData) {
+                        return cloudData;
+                    }
+                } catch (e) {
+                    console.warn('Error fetching cloud user data:', e);
                 }
-            } catch (e) {
-                // Cloud fetch failed, falling back to local silently
-
             }
         }
 
@@ -257,8 +271,6 @@ export const hybridService = {
         savedSets: StudySet[];
         customVocab?: Word[];
     }): Promise<boolean> {
-        const mode = getStorageMode();
-        const cloudUserId = getCloudUserId();
         const localUsername = authService.getCurrentUser();
 
         if (localUsername && localUsername.startsWith('guest_')) {
@@ -269,12 +281,14 @@ export const hybridService = {
         let localSuccess = false;
 
         // Save to cloud if available
-        if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId && cloudService.isConfigured()) {
-            try {
-                cloudSuccess = await cloudService.saveUserData(cloudUserId, data);
-            } catch (e) {
-                // Cloud save failed silently
-
+        if (cloudService.isConfigured()) {
+            const cloudUserId = await this.getActiveCloudUserId();
+            if (cloudUserId) {
+                try {
+                    cloudSuccess = await cloudService.saveUserData(cloudUserId, data);
+                } catch (e) {
+                    console.warn('Cloud save failed:', e);
+                }
             }
         }
 
@@ -284,17 +298,11 @@ export const hybridService = {
                 await authService.saveUserData(localUsername, data);
                 localSuccess = true;
             } catch (e) {
-                // Local save failed silently
-
+                console.warn('Local save failed:', e);
             }
         }
 
-        // Success if either worked (in hybrid mode)
-        if (mode === 'hybrid') {
-            return cloudSuccess || localSuccess;
-        }
-
-        return mode === 'cloud' ? cloudSuccess : localSuccess;
+        return cloudSuccess || localSuccess;
     },
 
     // ----------------
