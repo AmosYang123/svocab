@@ -518,11 +518,35 @@ export const cloudService = {
         if (!isSupabaseConfigured) return null;
 
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('user_preferences')
                 .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index, reminder_enabled, reminder_time')
                 .eq('user_id', userId)
-                .single();
+                .maybeSingle();
+
+            if (error) {
+                // Fallback for database instances where reminder columns haven't been added yet
+                const { data: fallbackData } = await supabase
+                    .from('user_preferences')
+                    .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
+                if (fallbackData) {
+                    const casted = fallbackData as any;
+                    return {
+                        theme: casted.theme as ThemeMode,
+                        showDefaultVocab: casted.show_default_vocab ?? true,
+                        showSatVocab: casted.show_sat_vocab ?? false,
+                        reminderEnabled: false,
+                        reminderTime: '09:00',
+                        lastStudyMode: casted.last_study_mode || 'all',
+                        lastActiveSetId: casted.last_active_set_id || null,
+                        lastCardIndex: casted.last_card_index ?? 0
+                    };
+                }
+                return null;
+            }
 
             const castedData = data as any;
 
@@ -569,9 +593,17 @@ export const cloudService = {
             if (reminderEnabled !== undefined) updateObj.reminder_enabled = reminderEnabled;
             if (reminderTime !== undefined) updateObj.reminder_time = reminderTime;
 
-            const { error } = await supabase
+            let { error } = await supabase
                 .from('user_preferences')
                 .upsert(updateObj);
+
+            if (error && (reminderEnabled !== undefined || reminderTime !== undefined)) {
+                // If reminder columns don't exist yet in Supabase schema, strip them and retry so other prefs save
+                delete updateObj.reminder_enabled;
+                delete updateObj.reminder_time;
+                const retry = await supabase.from('user_preferences').upsert(updateObj);
+                return !retry.error;
+            }
 
             return !error;
         } catch (error) {

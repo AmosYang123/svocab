@@ -137,34 +137,22 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
             currentPrefs?.theme || 'light',
             currentPrefs?.showDefaultVocab ?? true,
             currentPrefs?.showSatVocab ?? false,
-            undefined,
-            undefined,
-            undefined
+            currentPrefs?.lastStudyMode,
+            currentPrefs?.lastActiveSetId,
+            currentPrefs?.lastCardIndex,
+            newEnabled,
+            reminderTime
         );
 
-        // Update local reminder properties
-        // We write to localStorage since we savePreferences in hybridService.
-        // Let's also save the fields to IndexedDB/localStorage directly.
         const username = localStorage.getItem('ssat_current_user') || sessionStorage.getItem('ssat_current_user');
         if (username) {
             const prefsKey = `ssat_prefs_${username.toLowerCase()}`;
             const existing = JSON.parse(localStorage.getItem(prefsKey) || '{}');
-            const updated = {
+            localStorage.setItem(prefsKey, JSON.stringify({
                 ...existing,
                 reminderEnabled: newEnabled,
                 reminderTime
-            };
-            localStorage.setItem(prefsKey, JSON.stringify(updated));
-            
-            // Also notify the active session
-            await hybridService.savePreferences(
-                updated.theme,
-                updated.showDefaultVocab,
-                updated.showSatVocab,
-                undefined,
-                undefined,
-                undefined
-            );
+            }));
         }
     };
 
@@ -172,24 +160,26 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
         const time = e.target.value;
         setReminderTime(time);
 
+        const currentPrefs = await hybridService.getPreferences();
+        await hybridService.savePreferences(
+            currentPrefs?.theme || 'light',
+            currentPrefs?.showDefaultVocab ?? true,
+            currentPrefs?.showSatVocab ?? false,
+            currentPrefs?.lastStudyMode,
+            currentPrefs?.lastActiveSetId,
+            currentPrefs?.lastCardIndex,
+            reminderEnabled,
+            time
+        );
+
         const username = localStorage.getItem('ssat_current_user') || sessionStorage.getItem('ssat_current_user');
         if (username) {
             const prefsKey = `ssat_prefs_${username.toLowerCase()}`;
             const existing = JSON.parse(localStorage.getItem(prefsKey) || '{}');
-            const updated = {
+            localStorage.setItem(prefsKey, JSON.stringify({
                 ...existing,
                 reminderTime: time
-            };
-            localStorage.setItem(prefsKey, JSON.stringify(updated));
-
-            await hybridService.savePreferences(
-                updated.theme,
-                updated.showDefaultVocab,
-                updated.showSatVocab,
-                undefined,
-                undefined,
-                undefined
-            );
+            }));
         }
     };
 

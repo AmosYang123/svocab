@@ -48,11 +48,16 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
   theme TEXT DEFAULT 'light',
   show_default_vocab BOOLEAN DEFAULT true,
   show_sat_vocab BOOLEAN DEFAULT false,
+  reminder_enabled BOOLEAN DEFAULT false,
+  reminder_time TEXT DEFAULT '09:00',
   last_study_mode TEXT DEFAULT 'all',
   last_active_set_id TEXT,
   last_card_index INTEGER DEFAULT 0,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS reminder_enabled BOOLEAN DEFAULT false;
+ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS reminder_time TEXT DEFAULT '09:00';
+
 
 -- 6. User Custom Vocabulary (AI-generated or added)
 CREATE TABLE IF NOT EXISTS public.user_custom_vocab (
