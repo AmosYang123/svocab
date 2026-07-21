@@ -93,19 +93,22 @@ export async function expandWordsAI(
 ): Promise<any[]> {
     if (!IMPORT_API_KEY || !navigator.onLine || words.length === 0) return [];
 
-    const prompt = `Task: High-Quality Vocabulary Enrichment.
-Objective: For each word provided, generate an elite SSAT-level entry.
-
-STRICT QUOTA FOR EACH WORD:
-- "definition": A precise, academic dictionary-style definition.
-- "synonyms": 3-4 sophisticated synonyms.
-- "example": A complex, contextual sentence (min 15 words).
-- "difficulty": basic, easy, medium, or hard.
+    const prompt = `Task: Vocabulary Enrichment.
+For each word provided, generate a precise dictionary-style definition, 3-4 sophisticated synonyms, and a complex example sentence (min 15 words).
 
 INPUT:
-${words.map(w => `- "${w.name}"`).join("\n")}
+${JSON.stringify(words, null, 2)}
 
-Respond ONLY with a JSON array. Accuracy is the highest priority. If you cannot define a word, omit it rather than providing a poor result.`;
+Respond ONLY with a valid JSON array in this exact format. Do NOT wrap the response in markdown code blocks.
+[
+  {
+    "name": "word",
+    "definition": "dictionary-style definition",
+    "synonyms": "synonym1, synonym2, synonym3",
+    "example": "example sentence here",
+    "difficulty": "medium"
+  }
+]`;
 
     try {
         const controller = new AbortController();
@@ -120,7 +123,7 @@ Respond ONLY with a JSON array. Accuracy is the highest priority. If you cannot 
             body: JSON.stringify({
                 model: modelId,
                 messages: [
-                    { role: "system", content: "You are an elite SAT/SSAT Verbal Tutor. You provide flawless, complete vocabulary data in JSON format." },
+                    { role: "system", content: "You are an elite SAT/SSAT Verbal Tutor. You output ONLY raw JSON arrays. You NEVER output markdown." },
                     { role: "user", content: prompt }
                 ],
                 temperature: 0.1,
@@ -139,7 +142,6 @@ Respond ONLY with a JSON array. Accuracy is the highest priority. If you cannot 
         if (content.startsWith("```")) {
             content = content.replace(/^```json/i, "").replace(/^```/g, "").replace(/```$/g, "").trim();
         }
-
         if (content.includes("[")) {
             const start = content.indexOf("[");
             const end = content.lastIndexOf("]") + 1;
@@ -163,24 +165,22 @@ export async function smartExtractVocabAI(
 ): Promise<any[]> {
     if (!IMPORT_API_KEY || !navigator.onLine || !rawText.trim()) return [];
 
-    const prompt = `Task: SSAT/SAT Vocabulary Extraction & Structuring.
-Objective: Analyze the provided raw text and extract every single vocabulary word. 
-
-CRITICAL QUALITY RULES:
-1. ONE WORD PER OBJECT: Do not combine multiple words into a single "name" field. Each word must be its own entry.
-2. NO CLUTTER: Do not include page numbers, headers, or instructions.
-3. DATA QUOTA: Every entry MUST have a 'definition', multiple 'synonyms', and a 'example' sentence. If the raw text lacks these, you MUST generate them using your elite academic knowledge.
-4. ACCURACY OVER QUANTITY: It is better to extract 5 perfect entries than 20 broken ones. 
-5. WORD VALIDATION: Ensure the 'name' is a legitimate English vocabulary word.
+    const prompt = `Task: Vocabulary Word Extraction.
+Analyze the provided raw text and extract every vocabulary word. 
+If the text includes definitions next to the words, extract those too. If not, just extract the words and leave definition empty.
 
 RAW TEXT TO PROCESS:
 """
 ${rawText.slice(0, 8000)} 
 """
 
-MANDATORY OUTPUT FORMAT:
-Respond with ONLY a clean JSON array of objects.
-Required Schema: { "name": "...", "definition": "...", "synonyms": "...", "example": "...", "difficulty": "basic/easy/medium/hard" }`;
+Respond ONLY with a valid JSON array of objects in this exact format. Do NOT wrap in markdown or add explanations.
+[
+  {
+    "name": "extracted word",
+    "definition": "extracted definition (leave empty string if none provided in text)"
+  }
+]`;
 
     try {
         const controller = new AbortController();
@@ -195,7 +195,7 @@ Required Schema: { "name": "...", "definition": "...", "synonyms": "...", "examp
             body: JSON.stringify({
                 model: modelId,
                 messages: [
-                    { role: "system", content: "You are a professional linguist specializing in academic data extraction. You prioritize accuracy above all else. You ONLY output raw JSON arrays." },
+                    { role: "system", content: "You are a data extraction assistant. You output ONLY raw JSON arrays. You NEVER output markdown." },
                     { role: "user", content: prompt }
                 ],
                 temperature: 0.1,
@@ -215,7 +215,6 @@ Required Schema: { "name": "...", "definition": "...", "synonyms": "...", "examp
         if (content.startsWith("```")) {
             content = content.replace(/^```json/i, "").replace(/^```/g, "").replace(/```$/g, "").trim();
         }
-
         if (content.includes("[")) {
             const start = content.indexOf("[");
             const end = content.lastIndexOf("]") + 1;
@@ -229,9 +228,7 @@ Required Schema: { "name": "...", "definition": "...", "synonyms": "...", "examp
             // STRICT VALIDATION: Remove junk or incomplete entries
             return parsed.filter(w =>
                 w.name &&
-                w.name.split(' ').length <= 2 && // No multi-word sentences as names
-                w.definition && w.definition.length > 10 &&
-                w.example && w.example.length > 15
+                w.name.split(' ').length <= 3 // No full sentences as names
             );
         } catch (e) {
             console.error("[Groq Parse Error] Raw content:", content);
