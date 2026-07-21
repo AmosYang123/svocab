@@ -166,8 +166,13 @@ export async function smartExtractVocabAI(
     if (!IMPORT_API_KEY || !navigator.onLine || !rawText.trim()) return [];
 
     const prompt = `Task: Vocabulary Word Extraction.
-Analyze the provided raw text and extract every vocabulary word. 
-If the text includes definitions next to the words, extract those too. If not, just extract the words and leave definition empty.
+Analyze the provided raw text and extract every genuine English vocabulary word. 
+
+CRITICAL RULES:
+1. IGNORE headers, titles, and instructions (e.g., "100 sat words to study", "Chapter 1").
+2. IGNORE gibberish, random keystrokes, and non-words (e.g., "aslksjd", "qwerty").
+3. IGNORE standalone numbers and bullet points.
+4. If the text includes definitions next to the words, extract those too. If not, just extract the words and leave definition empty.
 
 RAW TEXT TO PROCESS:
 """
@@ -228,7 +233,10 @@ Respond ONLY with a valid JSON array of objects in this exact format. Do NOT wra
             // STRICT VALIDATION: Remove junk or incomplete entries
             return parsed.filter(w =>
                 w.name &&
-                w.name.split(' ').length <= 3 // No full sentences as names
+                w.name.trim().length > 1 && // Exclude single letters or empty strings
+                w.name.split(' ').length <= 3 && // No full sentences as names
+                !w.name.match(/^[0-9\.\-\_\s]+$/) && // Exclude just numbers/punctuation
+                !/^(chapter|lesson|unit|page|sat words|vocabulary)/i.test(w.name.trim()) // Exclude common headers
             );
         } catch (e) {
             console.error("[Groq Parse Error] Raw content:", content);
