@@ -981,14 +981,18 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
     }
 
     return (
-        <div className="min-h-screen bg-background py-8 transition-colors duration-300">
-            <div className="fixed top-4 left-4 z-50">
+        <div className="w-full max-w-4xl mx-auto flex flex-col items-center transition-colors duration-300">
+            {/* Header with Exit Button */}
+            <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-border/50">
                 <button
                     onClick={onComplete}
-                    className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-xs font-semibold uppercase tracking-wider bg-card/80 backdrop-blur px-4 py-2 rounded-full shadow-sm border border-border"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs font-semibold uppercase tracking-wider bg-muted/60 hover:bg-muted px-3.5 py-1.5 rounded-xl border border-border transition-all active:scale-[0.98]"
                 >
-                    <Icons.ChevronLeft /> Exit
+                    <Icons.ChevronLeft className="w-4 h-4" /> Exit Session
                 </button>
+                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-semibold">
+                    Study Session
+                </span>
             </div>
 
             {state.phase === 'warmup' && (
