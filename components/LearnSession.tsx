@@ -245,6 +245,7 @@ const QuizView: React.FC<{
     const [options, setOptions] = useState<string[]>([]);
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [feedbackState, setFeedbackState] = useState<'none' | 'correct' | 'incorrect'>('none');
+    const [isTimeout, setIsTimeout] = useState<boolean>(false);
     const [startTime, setStartTime] = useState<number>(Date.now());
 
     // Timer for Rounds B (10s) and C (6s)
@@ -262,6 +263,7 @@ const QuizView: React.FC<{
             setCurrentIndex(0);
             setSelectedOption(null);
             setFeedbackState('none');
+            setIsTimeout(false);
         }
     }, [words, phase]);
 
@@ -269,6 +271,7 @@ const QuizView: React.FC<{
     useEffect(() => {
         setQuestionTimer(getTimeLimit());
         setStartTime(Date.now());
+        setIsTimeout(false);
     }, [currentIndex, phase]);
 
     // Timer countdown
@@ -294,6 +297,7 @@ const QuizView: React.FC<{
         if (!word || feedbackState !== 'none') return;
 
         const timeSpent = Date.now() - startTime;
+        setIsTimeout(true);
         setFeedbackState('incorrect');
         onAnswer(word.name, false);
         if (onAnswerWithTime) onAnswerWithTime(word.name, timeSpent);
@@ -308,6 +312,7 @@ const QuizView: React.FC<{
             setCurrentIndex(prev => prev + 1);
             setSelectedOption(null);
             setFeedbackState('none');
+            setIsTimeout(false);
         } else {
             onComplete();
         }
@@ -340,6 +345,7 @@ const QuizView: React.FC<{
 
         const timeSpent = Date.now() - startTime;
         const correct = option === cleanDef(currentWord.definition);
+        setIsTimeout(false);
         setSelectedOption(option);
         setFeedbackState(correct ? 'correct' : 'incorrect');
         onAnswer(currentWord.name, correct);
@@ -369,7 +375,7 @@ const QuizView: React.FC<{
         if (feedbackState === 'correct') {
             return progress?.mastered ? FAIL_FORWARD_MESSAGES.mastered : FAIL_FORWARD_MESSAGES.correct;
         }
-        if (questionTimer === 0) return FAIL_FORWARD_MESSAGES.timeUp;
+        if (isTimeout) return FAIL_FORWARD_MESSAGES.timeUp;
         return progress?.deferred ? FAIL_FORWARD_MESSAGES.deferred : FAIL_FORWARD_MESSAGES.wrong;
     };
 
