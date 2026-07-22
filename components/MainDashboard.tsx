@@ -152,7 +152,33 @@ const MainDashboard: React.FC<MainDashboardProps> = memo(({
                         }
                     </p>
                 </div>
+            </div>
 
+            {/* Daily Challenge Quick Banner */}
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-primary/10 to-amber-500/5 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-amber-500 text-white rounded-xl font-bold shadow-xs text-lg">
+                        🔥
+                    </div>
+                    <div>
+                        <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                            Daily 30 Vocabulary Challenge
+                            <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-600 px-2 py-0.5 rounded-full font-bold">
+                                Streak Goal
+                            </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Build an unstoppable habit! Complete 30 essential words today in under 15 minutes.
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => navigate('/daily-exercise')}
+                    className="w-full sm:w-auto shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-5 py-2.5 rounded-xl text-xs shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                    <Icons.AcademicCap className="w-4 h-4" />
+                    Launch Daily Workout
+                </button>
             </div>
 
             {/* 4-Card Metric Grid (Matches Reference Image) */}

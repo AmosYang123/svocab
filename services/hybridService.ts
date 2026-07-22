@@ -394,6 +394,9 @@ export const hybridService = {
         isPro: boolean;
         reminderEnabled?: boolean;
         reminderTime?: string;
+        eveningReminderEnabled?: boolean;
+        eveningReminderTime?: string;
+        repeatNudgeEnabled?: boolean;
         lastStudyMode?: string;
         lastActiveSetId?: string;
         lastCardIndex?: number;
@@ -404,7 +407,6 @@ export const hybridService = {
         if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId) {
             const cloudUser = await cloudService.getCurrentUser();
             const cloudPrefs = await cloudService.getPreferences(cloudUserId);
-            // Use isPro from getCurrentUser as it's the source of truth for subscription status
             if (cloudPrefs) return { ...cloudPrefs, isPro: cloudUser?.isPro || false };
         }
 
@@ -417,27 +419,36 @@ export const hybridService = {
                 isPro: localPrefs.isPro ?? false,
                 reminderEnabled: (localPrefs as any).reminderEnabled ?? false,
                 reminderTime: (localPrefs as any).reminderTime ?? '09:00',
-                // These are loaded from localStorage in App.tsx typically, but keeping here for consistency
+                eveningReminderEnabled: (localPrefs as any).eveningReminderEnabled ?? true,
+                eveningReminderTime: (localPrefs as any).eveningReminderTime ?? '20:00',
+                repeatNudgeEnabled: (localPrefs as any).repeatNudgeEnabled ?? true,
                 lastStudyMode: localStorage.getItem(`ssat_${localPrefs.username}_mode`) || 'all',
                 lastActiveSetId: localStorage.getItem(`ssat_${localPrefs.username}_set_id`) || undefined,
                 lastCardIndex: parseInt(localStorage.getItem(`ssat_${localPrefs.username}_index`) || '0', 10)
             };
         }
 
-        return { theme: 'light', showDefaultVocab: true, showSatVocab: false, isPro: false, reminderEnabled: false, reminderTime: '09:00' };
+        return {
+            theme: 'light',
+            showDefaultVocab: true,
+            showSatVocab: false,
+            isPro: false,
+            reminderEnabled: false,
+            reminderTime: '09:00',
+            eveningReminderEnabled: true,
+            eveningReminderTime: '20:00',
+            repeatNudgeEnabled: true
+        };
     },
 
     async updateProStatus(isPro: boolean): Promise<boolean> {
         const mode = getStorageMode();
         const cloudUserId = getCloudUserId();
 
-        // 1. Update Cloud
         if ((mode === 'cloud' || mode === 'hybrid') && cloudUserId) {
             await cloudService.updateProStatus(isPro);
         }
 
-        // 2. Update Local
-        // We need to re-save preferences with the new isPro status
         const currentPrefs = await authService.getUserPreferences();
         if (currentPrefs) {
             await authService.saveUserPreferences(currentPrefs.theme, currentPrefs.showDefaultVocab, isPro);
@@ -454,7 +465,10 @@ export const hybridService = {
         lastActiveSetId?: string,
         lastCardIndex?: number,
         reminderEnabled?: boolean,
-        reminderTime?: string
+        reminderTime?: string,
+        eveningReminderEnabled?: boolean,
+        eveningReminderTime?: string,
+        repeatNudgeEnabled?: boolean
     ): Promise<boolean> {
         const cloudUserId = getCloudUserId();
         const localUsername = authService.getCurrentUser();
@@ -463,7 +477,6 @@ export const hybridService = {
             return true; // Skip saving for guest
         }
 
-        // Save to both
         if (cloudUserId && cloudService.isConfigured()) {
             await cloudService.savePreferences(
                 cloudUserId, 
@@ -487,6 +500,23 @@ export const hybridService = {
             reminderEnabled,
             reminderTime
         );
+
+        if (localUsername) {
+            const prefsKey = `ssat_prefs_${localUsername.toLowerCase()}`;
+            const existing = JSON.parse(localStorage.getItem(prefsKey) || '{}');
+            localStorage.setItem(prefsKey, JSON.stringify({
+                ...existing,
+                theme,
+                showDefaultVocab,
+                showSatVocab,
+                reminderEnabled: reminderEnabled ?? existing.reminderEnabled ?? false,
+                reminderTime: reminderTime || existing.reminderTime || '09:00',
+                eveningReminderEnabled: eveningReminderEnabled ?? existing.eveningReminderEnabled ?? true,
+                eveningReminderTime: eveningReminderTime || existing.eveningReminderTime || '20:00',
+                repeatNudgeEnabled: repeatNudgeEnabled ?? existing.repeatNudgeEnabled ?? true,
+            }));
+        }
+
         return true;
     },
 

@@ -44,6 +44,9 @@ export interface UserPreferences {
   showSatVocab?: boolean;
   reminderEnabled?: boolean;
   reminderTime?: string; // e.g. "09:00"
+  eveningReminderEnabled?: boolean;
+  eveningReminderTime?: string; // e.g. "20:00"
+  repeatNudgeEnabled?: boolean;
 }
 
 export interface DailyProgress {

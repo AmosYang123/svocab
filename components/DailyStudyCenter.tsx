@@ -21,6 +21,10 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
     // Notification states
     const [reminderEnabled, setReminderEnabled] = useState(false);
     const [reminderTime, setReminderTime] = useState('09:00');
+    const [eveningReminderEnabled, setEveningReminderEnabled] = useState(true);
+    const [eveningReminderTime, setEveningReminderTime] = useState('20:00');
+    const [repeatNudgeEnabled, setRepeatNudgeEnabled] = useState(true);
+    const [testSent, setTestSent] = useState(false);
     const [notifSupported, setNotifSupported] = useState(false);
     const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
 
@@ -126,6 +130,9 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
             if (prefs) {
                 setReminderEnabled(!!prefs.reminderEnabled);
                 setReminderTime((prefs as any).reminderTime || '09:00');
+                setEveningReminderEnabled((prefs as any).eveningReminderEnabled ?? true);
+                setEveningReminderTime((prefs as any).eveningReminderTime || '20:00');
+                setRepeatNudgeEnabled((prefs as any).repeatNudgeEnabled ?? true);
             }
         } catch (e) {
             console.error("Failed to load daily study center data", e);
@@ -168,6 +175,55 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                 reminderEnabled: newEnabled,
                 reminderTime
             }));
+        }
+    };
+
+    const handleToggleEveningReminder = async () => {
+        const newEnabled = !eveningReminderEnabled;
+        setEveningReminderEnabled(newEnabled);
+        const currentPrefs = await hybridService.getPreferences();
+        await hybridService.savePreferences(
+            currentPrefs?.theme || 'light',
+            currentPrefs?.showDefaultVocab ?? true,
+            currentPrefs?.showSatVocab ?? false,
+            currentPrefs?.lastStudyMode,
+            currentPrefs?.lastActiveSetId,
+            currentPrefs?.lastCardIndex,
+            reminderEnabled,
+            reminderTime,
+            newEnabled,
+            eveningReminderTime,
+            repeatNudgeEnabled
+        );
+    };
+
+    const handleToggleRepeatNudge = async () => {
+        const newEnabled = !repeatNudgeEnabled;
+        setRepeatNudgeEnabled(newEnabled);
+        const currentPrefs = await hybridService.getPreferences();
+        await hybridService.savePreferences(
+            currentPrefs?.theme || 'light',
+            currentPrefs?.showDefaultVocab ?? true,
+            currentPrefs?.showSatVocab ?? false,
+            currentPrefs?.lastStudyMode,
+            currentPrefs?.lastActiveSetId,
+            currentPrefs?.lastCardIndex,
+            reminderEnabled,
+            reminderTime,
+            eveningReminderEnabled,
+            eveningReminderTime,
+            newEnabled
+        );
+    };
+
+    const handleTestNotification = async () => {
+        const success = await notificationService.sendTestNotification(streak);
+        setNotifPermission(notificationService.getPermissionStatus());
+        if (success) {
+            setTestSent(true);
+            setTimeout(() => setTestSent(false), 3000);
+        } else {
+            alert("Could not send test notification. Please ensure browser notification permissions are allowed in your browser settings.");
         }
     };
 
@@ -491,19 +547,76 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                         </div>
 
                         {reminderEnabled && (
-                            <div className="space-y-3 border-t border-border pt-3 animate-in slide-in-from-top-2 duration-200">
+                            <div className="space-y-3.5 border-t border-border pt-3.5 animate-in slide-in-from-top-2 duration-200">
+                                {/* Preferred Morning Time */}
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-foreground">
-                                        Preferred Reminder Time
+                                    <span className="text-xs font-medium text-foreground">
+                                        Morning Reminder Time
                                     </span>
                                     <input
                                         type="time"
                                         value={reminderTime}
                                         onChange={handleChangeReminderTime}
-                                        className="bg-background border border-input px-3 py-1.5 rounded-lg text-xs font-mono text-foreground focus:outline-none focus:border-ring cursor-pointer"
+                                        className="bg-background border border-input px-3 py-1 rounded-lg text-xs font-mono text-foreground focus:outline-none focus:border-ring cursor-pointer"
                                     />
                                 </div>
 
+                                {/* Evening Streak Protection Toggle */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-medium text-foreground">Evening Streak Saver</div>
+                                        <div className="text-[10px] text-muted-foreground">Alert at 8:00 PM if workout is uncompleted</div>
+                                    </div>
+                                    <button
+                                        onClick={handleToggleEveningReminder}
+                                        aria-label="Toggle evening streak saver"
+                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            eveningReminderEnabled ? 'bg-amber-500' : 'bg-muted'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                eveningReminderEnabled ? 'translate-x-4' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* 5-Minute Escalation Nudge Toggle */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-medium text-foreground">5-Min Repeat Nudges</div>
+                                        <div className="text-[10px] text-muted-foreground">Repeat reminder every 5m if no words learned</div>
+                                    </div>
+                                    <button
+                                        onClick={handleToggleRepeatNudge}
+                                        aria-label="Toggle 5-minute repeat nudges"
+                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            repeatNudgeEnabled ? 'bg-primary' : 'bg-muted'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                repeatNudgeEnabled ? 'translate-x-4' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Test Notification Button */}
+                                <button
+                                    onClick={handleTestNotification}
+                                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                        testSent
+                                            ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/30'
+                                            : 'bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20'
+                                    }`}
+                                >
+                                    <Bell className="w-3.5 h-3.5" />
+                                    {testSent ? '✓ Test Notification Sent!' : 'Test Notification Now'}
+                                </button>
+
+                                {/* System note */}
                                 <div className="bg-muted/60 p-3 rounded-xl border border-border flex items-start gap-2 text-[10px] text-muted-foreground font-mono">
                                     <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                     <span>
