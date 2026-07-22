@@ -7,12 +7,13 @@ import { scoreWritingAnswerAI } from '../services/groqService';
 
 // --- Types ---
 
-type LearnPhase = 'warmup' | 'round_a' | 'round_b' | 'round_c' | 'writing_test' | 'micro_review' | 'summary' | 'session_review' | 'session_test' | 'session_summary';
+type LearnPhase = 'warmup' | 'round_a' | 'round_b' | 'round_c' | 'context_test' | 'writing_test' | 'micro_review' | 'summary' | 'session_review' | 'session_test' | 'session_summary';
 
 interface WordProgress {
     roundA: boolean | null;
     roundB: boolean | null;
     roundC: boolean | null;
+    contextTest?: boolean | null;
     writingTest: boolean | null;
     attempts: number;
     mastered: boolean;
@@ -47,6 +48,7 @@ const FEEDBACK_DURATIONS: Record<string, number> = {
     round_a: 2500,
     round_b: 2000,
     round_c: 1500,
+    context_test: 2000,
     writing_test: 2000,
     micro_review: 2000,
     session_review: 0,
@@ -229,7 +231,7 @@ const WarmupView: React.FC<{
 
 // 2. Quiz View - Multiple choice (correct = instant advance, wrong = feedback duration)
 const QuizView: React.FC<{
-    phase: 'round_a' | 'round_b' | 'round_c' | 'micro_review' | 'session_review';
+    phase: 'round_a' | 'round_b' | 'round_c' | 'context_test' | 'micro_review' | 'session_review';
     words: Word[];
     allVocab: Word[];
     groupIndex: number;
@@ -367,6 +369,7 @@ const QuizView: React.FC<{
         round_a: 'Round A: First Pass',
         round_b: 'Round B: Review Missed',
         round_c: 'Round C: Final Check',
+        context_test: 'Sentence Context Practice',
         micro_review: 'Quick Review',
         session_review: 'Final Review',
     };
@@ -377,6 +380,41 @@ const QuizView: React.FC<{
         }
         if (isTimeout) return FAIL_FORWARD_MESSAGES.timeUp;
         return progress?.deferred ? FAIL_FORWARD_MESSAGES.deferred : FAIL_FORWARD_MESSAGES.wrong;
+    };
+
+    const getExampleSentence = (word: Word): string => {
+        if (word.example && word.example.trim().length > 0) {
+            return word.example;
+        }
+        if (word.definition && word.definition.includes('(Ex:')) {
+            const match = word.definition.match(/\(Ex:\s*([^)]+)\)/i);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+        }
+        return `The author used the word "${word.name}" in this passage to convey a specific meaning.`;
+    };
+
+    const renderSentenceWithHighlight = (sentence: string, targetWordName: string) => {
+        try {
+            const regex = new RegExp(`(${targetWordName})`, 'gi');
+            const parts = sentence.split(regex);
+            return parts.map((part, i) => {
+                if (part.toLowerCase() === targetWordName.toLowerCase()) {
+                    return (
+                        <span
+                            key={i}
+                            className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/30 inline-block mx-0.5 shadow-2xs"
+                        >
+                            {part}
+                        </span>
+                    );
+                }
+                return part;
+            });
+        } catch (e) {
+            return sentence;
+        }
     };
 
     return (
@@ -409,12 +447,23 @@ const QuizView: React.FC<{
                 </div>
             </div>
 
-            {/* Word */}
-            <div className="w-full bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
-                <h3 className="text-3xl font-bold text-foreground text-center">
-                    {currentWord.name}
-                </h3>
-            </div>
+            {/* Word or Sentence Context Card */}
+            {phase === 'context_test' ? (
+                <div className="w-full bg-card rounded-2xl shadow-xs border border-border p-6 mb-6 text-center space-y-3">
+                    <div className="text-xs font-mono text-primary uppercase tracking-widest font-semibold">
+                        What does <span className="font-bold underline">{currentWord.name}</span> mean in this sentence?
+                    </div>
+                    <blockquote className="text-base md:text-lg font-medium text-foreground italic bg-muted/40 p-4 rounded-xl border border-border/60 leading-relaxed">
+                        "{renderSentenceWithHighlight(getExampleSentence(currentWord), currentWord.name)}"
+                    </blockquote>
+                </div>
+            ) : (
+                <div className="w-full bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
+                    <h3 className="text-3xl font-bold text-foreground text-center">
+                        {currentWord.name}
+                    </h3>
+                </div>
+            )}
 
             {/* Options */}
             <div className="w-full space-y-3 mb-4">
@@ -830,10 +879,11 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
             if (prev.phase === 'round_a') wp.roundA = correct;
             else if (prev.phase === 'round_b') wp.roundB = correct;
             else if (prev.phase === 'round_c') wp.roundC = correct;
+            else if (prev.phase === 'context_test') wp.contextTest = correct;
             else if (prev.phase === 'writing_test') wp.writingTest = correct;
 
             // Mastery: correct in 2+ rounds
-            const roundResults = [wp.roundA, wp.roundB, wp.roundC, wp.writingTest].filter(r => r === true);
+            const roundResults = [wp.roundA, wp.roundB, wp.roundC, wp.contextTest, wp.writingTest].filter(r => r === true);
             if (roundResults.length >= 2) {
                 wp.mastered = true;
                 onUpdateWordStatus(wordName, 'mastered');
@@ -865,14 +915,17 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
                     return { ...prev, phase: 'round_a' };
 
                 case 'round_a':
-                    if (missedInA.length === 0) return { ...prev, phase: 'writing_test' };
+                    if (missedInA.length === 0) return { ...prev, phase: 'context_test' };
                     return { ...prev, phase: 'round_b' };
 
                 case 'round_b':
-                    if (missedInB.length === 0) return { ...prev, phase: 'writing_test' };
+                    if (missedInB.length === 0) return { ...prev, phase: 'context_test' };
                     return { ...prev, phase: 'round_c' };
 
                 case 'round_c':
+                    return { ...prev, phase: 'context_test' };
+
+                case 'context_test':
                     return { ...prev, phase: 'writing_test' };
 
                 case 'writing_test':
@@ -884,7 +937,7 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
                         unmasteredInGroup.forEach(w => {
                             updatedProgress[w.name] = {
                                 ...updatedProgress[w.name],
-                                roundA: null, roundB: null, roundC: null, writingTest: null,
+                                roundA: null, roundB: null, roundC: null, contextTest: null, writingTest: null,
                                 mastered: false
                             };
                         });
@@ -1013,10 +1066,10 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
                 />
             )}
 
-            {(state.phase === 'round_a' || state.phase === 'round_b' || state.phase === 'round_c') && (
+            {(state.phase === 'round_a' || state.phase === 'round_b' || state.phase === 'round_c' || state.phase === 'context_test') && (
                 <QuizView
                     phase={state.phase}
-                    words={wordsForCurrentRound}
+                    words={state.phase === 'context_test' ? currentGroup : wordsForCurrentRound}
                     allVocab={studyList} // Using full list for distractors
                     groupIndex={state.currentGroupIndex}
                     totalGroups={state.allGroups.length}
