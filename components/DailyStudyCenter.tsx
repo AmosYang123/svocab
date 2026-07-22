@@ -49,41 +49,46 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
             const calculatedStreak = notificationService.calculateStreak(progressList);
             setStreak(calculatedStreak);
 
-            // Fetch today's progress
+            // Fetch today's progress & user status map
             let todayRecord = await hybridService.getDailyProgress(todayStr);
+            const userData = await hybridService.getUserData();
+
+            const masteredSet = new Set<string>();
+            const studiedSet = new Set<string>();
+            if (userData?.wordStatuses) {
+                Object.entries(userData.wordStatuses).forEach(([name, status]) => {
+                    const upper = name.toUpperCase();
+                    if (status === 'mastered') masteredSet.add(upper);
+                    if (status) studiedSet.add(upper);
+                });
+            }
+
+            // Helper to pick non-mastered words up to 30
+            const getNonMasteredWords = (existingNames: string[] = []): string[] => {
+                const existingUpper = new Set(existingNames.map(n => n.toUpperCase()));
+
+                // 1. Unstudied non-mastered words
+                const unstudied = vocab.filter(w =>
+                    !masteredSet.has(w.name.toUpperCase()) &&
+                    !studiedSet.has(w.name.toUpperCase()) &&
+                    !existingUpper.has(w.name.toUpperCase())
+                );
+                let result = [...existingNames, ...unstudied.slice(0, Math.max(0, 30 - existingNames.length)).map(w => w.name)];
+
+                // 2. Review non-mastered words
+                if (result.length < 30) {
+                    const currentUpper = new Set(result.map(n => n.toUpperCase()));
+                    const reviewWords = vocab.filter(w =>
+                        !masteredSet.has(w.name.toUpperCase()) &&
+                        !currentUpper.has(w.name.toUpperCase())
+                    );
+                    result = [...result, ...reviewWords.slice(0, Math.max(0, 30 - result.length)).map(w => w.name)];
+                }
+                return result;
+            };
 
             if (!todayRecord) {
-                // Generate today's daily 30 words
-                // 1. Get all studied words (mastered or review)
-                const userData = await hybridService.getUserData();
-                const studiedWordNames = new Set(Object.keys(userData?.wordStatuses || {}));
-
-                // 2. Filter unstudied words from active vocab
-                const unstudiedWords = vocab.filter(w => !studiedWordNames.has(w.name));
-
-                // 3. Take the first 30 words
-                const selectedWords = unstudiedWords.slice(0, 30);
-                
-                // If we don't have enough unstudied words, fallback to any unmastered words, or random
-                let wordNames = selectedWords.map(w => w.name);
-                if (wordNames.length < 30) {
-                    const extraNeeded = 30 - wordNames.length;
-                    const unmastered = vocab.filter(w => 
-                        !wordNames.includes(w.name) && 
-                        userData?.wordStatuses[w.name] !== 'mastered'
-                    );
-                    const extra = unmastered.slice(0, extraNeeded).map(w => w.name);
-                    wordNames = [...wordNames, ...extra];
-                }
-
-                // If still not enough, fill with random words
-                if (wordNames.length < 30) {
-                    const extraNeeded = 30 - wordNames.length;
-                    const remaining = vocab.filter(w => !wordNames.includes(w.name));
-                    const extra = remaining.slice(0, extraNeeded).map(w => w.name);
-                    wordNames = [...wordNames, ...extra];
-                }
-
+                const wordNames = getNonMasteredWords();
                 todayRecord = {
                     date: todayStr,
                     wordNames,
@@ -94,15 +99,25 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                         wordStates: {}
                     }
                 };
-
                 await hybridService.saveDailyProgress(todayRecord);
+            } else if (!todayRecord.completed) {
+                // Purge any newly mastered words from active todayRecord.wordNames
+                const unmasteredNames = todayRecord.wordNames.filter(name => !masteredSet.has(name.toUpperCase()));
+                if (unmasteredNames.length !== todayRecord.wordNames.length) {
+                    const refilledNames = getNonMasteredWords(unmasteredNames);
+                    todayRecord = {
+                        ...todayRecord,
+                        wordNames: refilledNames
+                    };
+                    await hybridService.saveDailyProgress(todayRecord);
+                }
             }
 
             setTodayProgress(todayRecord);
 
             // Resolve actual Word objects for the checklist
             const wordsList = todayRecord.wordNames
-                .map(name => vocab.find(w => w.name === name))
+                .map(name => vocab.find(w => w.name.toUpperCase() === name.toUpperCase()))
                 .filter(Boolean) as Word[];
             setAssignedWords(wordsList);
 
@@ -275,18 +290,39 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                             <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
                                 PROGRESS SUMMARY
                             </div>
-                            <div className="flex items-end gap-2">
-                                <span className="text-3xl font-bold text-foreground">
-                                    {todayProgress?.completed ? "30/30" : `${(todayProgress?.progress.completedBatches || 0) * 10}/30`}
-                                </span>
-                                <span className="text-xs text-muted-foreground font-medium mb-1">words reviewed</span>
-                            </div>
-                            <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-                                <div 
-                                    className="bg-primary h-full transition-all duration-500" 
-                                    style={{ width: `${todayProgress?.completed ? 100 : ((todayProgress?.progress.completedBatches || 0) * 10 / 30) * 100}%` }}
-                                />
-                            </div>
+                            {(() => {
+                                const totalCount = todayProgress?.wordNames.length || 30;
+                                const completedCount = todayProgress?.completed
+                                    ? totalCount
+                                    : Object.values(todayProgress?.progress?.wordStates || {}).filter((s: any) => s.correct).length;
+                                const remainingCount = Math.max(0, totalCount - completedCount);
+                                const pct = totalCount > 0 ? Math.min(100, Math.round((completedCount / totalCount) * 100)) : 0;
+                                const isPaused = !todayProgress?.completed && (completedCount > 0 || (todayProgress?.progress?.completedBatches || 0) > 0);
+
+                                return (
+                                    <>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-end gap-2">
+                                                <span className="text-3xl font-bold text-foreground">
+                                                    {completedCount}/{totalCount}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground font-medium mb-1">words completed</span>
+                                            </div>
+                                            {!todayProgress?.completed && (
+                                                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                                                    {remainingCount} word{remainingCount !== 1 ? 's' : ''} left
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden">
+                                            <div 
+                                                className="bg-primary h-full transition-all duration-500" 
+                                                style={{ width: `${todayProgress?.completed ? 100 : pct}%` }}
+                                            />
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         <div className="flex flex-col justify-center">
@@ -303,9 +339,15 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3.5 px-6 rounded-xl shadow-xs transition-all active:scale-[0.98] uppercase tracking-wider text-xs flex items-center justify-center gap-2"
                                 >
                                     <Play className="w-4 h-4" /> 
-                                    {todayProgress?.progress && todayProgress.progress.completedBatches > 0 
-                                        ? "Resume Workout Session" 
-                                        : "Start 30 Word Challenge"}
+                                    {(() => {
+                                        const totalCount = todayProgress?.wordNames.length || 30;
+                                        const completedCount = Object.values(todayProgress?.progress?.wordStates || {}).filter((s: any) => s.correct).length;
+                                        const remainingCount = Math.max(0, totalCount - completedCount);
+                                        const hasProgress = completedCount > 0 || (todayProgress?.progress?.completedBatches || 0) > 0;
+                                        return hasProgress 
+                                            ? `Resume Workout Session (${remainingCount} word${remainingCount !== 1 ? 's' : ''} left)` 
+                                            : "Start 30 Word Challenge";
+                                    })()}
                                 </button>
                             )}
                         </div>

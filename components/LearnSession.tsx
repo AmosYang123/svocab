@@ -37,6 +37,7 @@ interface LearnStateV2 {
 interface LearnSessionProps {
     studyList: Word[];
     onComplete: () => void;
+    onExit?: () => void;
     onUpdateWordStatus: (wordName: string, status: WordStatusType) => void;
 }
 
@@ -753,6 +754,7 @@ const SessionSummary: React.FC<{
 const LearnSession: React.FC<LearnSessionProps> = React.memo(({
     studyList,
     onComplete,
+    onExit,
     onUpdateWordStatus
 }) => {
     const [state, setState] = useState<LearnStateV2>(() => {
@@ -828,17 +830,18 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
             const roundResults = [wp.roundA, wp.roundB, wp.roundC, wp.writingTest].filter(r => r === true);
             if (roundResults.length >= 2) {
                 wp.mastered = true;
-            }
-
-            // Defer after 3 failed attempts
-            if (wp.attempts >= 3 && !wp.mastered && !correct) {
+                onUpdateWordStatus(wordName, 'mastered');
+            } else if (wp.attempts >= 3 && !wp.mastered && !correct) {
                 wp.deferred = true;
+                onUpdateWordStatus(wordName, 'review');
+            } else if (correct && !wp.mastered) {
+                onUpdateWordStatus(wordName, 'review');
             }
 
             progress[wordName] = wp;
             return { ...prev, wordProgress: progress };
         });
-    }, []);
+    }, [onUpdateWordStatus]);
 
     const advancePhase = useCallback(() => {
         setState(prev => {
@@ -985,7 +988,7 @@ const LearnSession: React.FC<LearnSessionProps> = React.memo(({
             {/* Header with Exit Button */}
             <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-border/50">
                 <button
-                    onClick={onComplete}
+                    onClick={onExit || onComplete}
                     className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs font-semibold uppercase tracking-wider bg-muted/60 hover:bg-muted px-3.5 py-1.5 rounded-xl border border-border transition-all active:scale-[0.98]"
                 >
                     <Icons.ChevronLeft className="w-4 h-4" /> Exit Session

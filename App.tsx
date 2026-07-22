@@ -44,7 +44,7 @@ const PaymentRouteWrapper = () => {
 };
 
 // Daily Exercise flow loader with resilient auto-generation
-const DailyExerciseRoute = ({ vocab }: { vocab: Word[] }) => {
+const DailyExerciseRoute = ({ vocab, onUpdateWordStatus }: { vocab: Word[]; onUpdateWordStatus: (wordName: string, status: WordStatusType) => void }) => {
   const [words, setWords] = useState<string[] | null>(null);
   const navigate = useNavigate();
 
@@ -53,26 +53,53 @@ const DailyExerciseRoute = ({ vocab }: { vocab: Word[] }) => {
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         let daily = await hybridService.getDailyProgress(todayStr);
+        const userData = await hybridService.getUserData();
+
+        const masteredSet = new Set<string>();
+        const studiedSet = new Set<string>();
+        if (userData?.wordStatuses) {
+          Object.entries(userData.wordStatuses).forEach(([name, status]) => {
+            const upper = name.toUpperCase();
+            if (status === 'mastered') masteredSet.add(upper);
+            if (status) studiedSet.add(upper);
+          });
+        }
+
+        const getNonMasteredWords = (existingNames: string[] = []): string[] => {
+          const existingUpper = new Set(existingNames.map(n => n.toUpperCase()));
+
+          // 1. Unstudied non-mastered words
+          const unstudied = vocab.filter(w =>
+            !masteredSet.has(w.name.toUpperCase()) &&
+            !studiedSet.has(w.name.toUpperCase()) &&
+            !existingUpper.has(w.name.toUpperCase())
+          );
+          let result = [...existingNames, ...unstudied.slice(0, Math.max(0, 30 - existingNames.length)).map(w => w.name)];
+
+          // 2. Review non-mastered words
+          if (result.length < 30) {
+            const currentUpper = new Set(result.map(n => n.toUpperCase()));
+            const reviewWords = vocab.filter(w =>
+              !masteredSet.has(w.name.toUpperCase()) &&
+              !currentUpper.has(w.name.toUpperCase())
+            );
+            result = [...result, ...reviewWords.slice(0, Math.max(0, 30 - result.length)).map(w => w.name)];
+          }
+          return result;
+        };
 
         if (daily && daily.wordNames && daily.wordNames.length > 0) {
+          if (!daily.completed) {
+            const unmasteredNames = daily.wordNames.filter(name => !masteredSet.has(name.toUpperCase()));
+            if (unmasteredNames.length !== daily.wordNames.length) {
+              const refilledNames = getNonMasteredWords(unmasteredNames);
+              daily = { ...daily, wordNames: refilledNames };
+              await hybridService.saveDailyProgress(daily);
+            }
+          }
           setWords(daily.wordNames);
         } else {
-          // Auto-generate today's 30 words if missing instead of redirecting back
-          const userData = await hybridService.getUserData();
-          const studiedWordNames = new Set(Object.keys(userData?.wordStatuses || {}));
-          const unstudiedWords = vocab.filter(w => !studiedWordNames.has(w.name));
-          let selectedNames = unstudiedWords.slice(0, 30).map(w => w.name);
-
-          if (selectedNames.length < 30) {
-            const unmastered = vocab.filter(w => !selectedNames.includes(w.name) && userData?.wordStatuses[w.name] !== 'mastered');
-            selectedNames = [...selectedNames, ...unmastered.slice(0, 30 - selectedNames.length).map(w => w.name)];
-          }
-
-          if (selectedNames.length < 30) {
-            const remaining = vocab.filter(w => !selectedNames.includes(w.name));
-            selectedNames = [...selectedNames, ...remaining.slice(0, 30 - selectedNames.length).map(w => w.name)];
-          }
-
+          const selectedNames = getNonMasteredWords();
           const newRecord = {
             date: todayStr,
             wordNames: selectedNames,
@@ -89,7 +116,6 @@ const DailyExerciseRoute = ({ vocab }: { vocab: Word[] }) => {
         }
       } catch (e) {
         console.error('Error loading daily exercise:', e);
-        // Fallback: use first 30 words in vocab
         setWords(vocab.slice(0, 30).map(w => w.name));
       }
     }
@@ -113,6 +139,7 @@ const DailyExerciseRoute = ({ vocab }: { vocab: Word[] }) => {
       vocab={vocab}
       onComplete={() => navigate('/daily')}
       onCancel={() => navigate('/daily')}
+      onUpdateWordStatus={onUpdateWordStatus}
     />
   );
 };
@@ -887,7 +914,7 @@ export default function App() {
         } />
         <Route path="/daily-exercise" element={
           !currentUser ? <Navigate to="/" replace /> : wrapSidebar(
-            <DailyExerciseRoute vocab={vocab} />
+            <DailyExerciseRoute vocab={vocab} onUpdateWordStatus={updateWordStatus} />
           )
         } />
         <Route path="/learn" element={
