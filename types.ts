@@ -47,6 +47,10 @@ export interface UserPreferences {
   eveningReminderEnabled?: boolean;
   eveningReminderTime?: string; // e.g. "20:00"
   repeatNudgeEnabled?: boolean;
+  lastStudyMode?: StudyMode;
+  lastActiveSetId?: string;
+  lastCardIndex?: number;
+  lastWordName?: string;
 }
 
 export interface DailyProgress {

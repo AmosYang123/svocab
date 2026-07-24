@@ -53,10 +53,12 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
   last_study_mode TEXT DEFAULT 'all',
   last_active_set_id TEXT,
   last_card_index INTEGER DEFAULT 0,
+  last_word_name TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS reminder_enabled BOOLEAN DEFAULT false;
 ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS reminder_time TEXT DEFAULT '09:00';
+ALTER TABLE public.user_preferences ADD COLUMN IF NOT EXISTS last_word_name TEXT;
 
 
 -- 6. User Custom Vocabulary (AI-generated or added)

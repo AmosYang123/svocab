@@ -220,6 +220,12 @@ export default function App() {
     const lastIdx = localStorage.getItem(`ssat_${user}_index`);
     return lastIdx ? parseInt(lastIdx, 10) : 0;
   });
+  const [lastWordName, setLastWordName] = useState<string | null>(() => {
+    const user = authService.getCurrentUser();
+    if (!user) return null;
+    return localStorage.getItem(`ssat_${user}_word`);
+  });
+  const [hasRestoredPosition, setHasRestoredPosition] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isPrefsLoaded, setIsPrefsLoaded] = useState(false);
 
@@ -263,6 +269,7 @@ export default function App() {
         if (prefs.lastStudyMode) setStudyMode(prefs.lastStudyMode as StudyMode);
         if (prefs.lastActiveSetId) setActiveSetId(prefs.lastActiveSetId);
         if (prefs.lastCardIndex !== undefined) setCurrentIndex(prefs.lastCardIndex);
+        if (prefs.lastWordName) setLastWordName(prefs.lastWordName);
       }
       setIsPrefsLoaded(true);
 
@@ -316,121 +323,6 @@ export default function App() {
     setShowDeckPicker(false);
   }, [theme, currentUser, handleUpdatePreferences]);
 
-  // Save session state periodically or on change
-  useEffect(() => {
-    if (isPrefsLoaded && currentUser) {
-      const timer = setTimeout(() => {
-        hybridService.savePreferences(
-          theme,
-          showDefaultVocab,
-          showSatVocab,
-          studyMode,
-          activeSetId || undefined,
-          currentIndex
-        );
-      }, 2000); // 2 second debounce
-      return () => clearTimeout(timer);
-    }
-  }, [theme, showDefaultVocab, showSatVocab, studyMode, activeSetId, currentIndex, currentUser, isPrefsLoaded]);
-
-  // --- INITIALIZATION ---
-  useEffect(() => {
-    // 1. Check current local/hybrid user
-    async function initUser() {
-      try {
-        const user = await hybridService.getCurrentUser();
-        if (user) {
-          setCurrentUser(user.username);
-          setStorageMode(user.mode);
-        }
-      } finally {
-        setIsAuthChecking(false);
-      }
-    }
-    initUser();
-
-    // 2. Listen for Supabase auth changes (for OAuth flow)
-    const unsubscribe = cloudService.onAuthStateChange(async (userId) => {
-      if (userId) {
-        hybridService.setCloudUserId(userId);
-        const cloudUser = await cloudService.getCurrentUser();
-        if (cloudUser) {
-          setCurrentUser(cloudUser.username);
-          setStorageMode('cloud');
-          hybridService.setStorageMode('cloud');
-        }
-      } else {
-        // Only clear if we were in cloud mode
-        const currentMode = hybridService.getStorageMode();
-        if (currentMode === 'cloud') {
-          hybridService.setCloudUserId(null);
-          setCurrentUser(null);
-          setStorageMode('local');
-        }
-      }
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
-
-  // --- PERSISTENCE: Loading ---
-  useEffect(() => {
-    async function loadUserData() {
-      setIsDataLoaded(false);
-      if (currentUser) {
-        // Load user data via hybrid service
-        const userData = await hybridService.getUserData();
-        if (userData) {
-          // Normalize all word names to uppercase for consistency
-          const normalizedStatuses: WordStatusMap = {};
-          if (userData.wordStatuses) {
-            Object.entries(userData.wordStatuses).forEach(([name, status]) => {
-              normalizedStatuses[name.toUpperCase()] = status;
-            });
-          }
-
-          const normalizedMarked: MarkedWordsMap = {};
-          if (userData.markedWords) {
-            Object.entries(userData.markedWords).forEach(([name, marked]) => {
-              normalizedMarked[name.toUpperCase()] = !!marked;
-            });
-          }
-
-          setWordStatuses(normalizedStatuses);
-          setMarkedWords(normalizedMarked);
-          setSavedSets(userData.savedSets || []);
-          setCustomVocab(userData.customVocab?.map(w => ({ ...w, name: w.name.toUpperCase() })) || []);
-        }
-
-        // Navigation stats
-        setStudyMode((localStorage.getItem(`ssat_${currentUser}_mode`) as StudyMode) || 'all');
-        setActiveSetId(localStorage.getItem(`ssat_${currentUser}_set_id`));
-        const lastIdx = localStorage.getItem(`ssat_${currentUser}_index`);
-        setCurrentIndex(lastIdx ? parseInt(lastIdx, 10) : 0);
-      }
-      setIsDataLoaded(true);
-    }
-    loadUserData();
-  }, [currentUser]);
-
-  // --- PERSISTENCE: Saving ---
-  useEffect(() => {
-    if (isDataLoaded && currentUser) {
-      hybridService.saveUserData({ wordStatuses, markedWords, savedSets, customVocab });
-    }
-  }, [wordStatuses, markedWords, savedSets, customVocab, currentUser, isDataLoaded]);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`ssat_${currentUser}_mode`, studyMode);
-      if (activeSetId) localStorage.setItem(`ssat_${currentUser}_set_id`, activeSetId);
-      else localStorage.removeItem(`ssat_${currentUser}_set_id`);
-      localStorage.setItem(`ssat_${currentUser}_index`, currentIndex.toString());
-    }
-  }, [studyMode, activeSetId, currentIndex, currentUser]);
-
   // --- LOGIC: Mode Switching ---
   const studyList = useMemo(() => {
     let list: Word[] = [];
@@ -444,9 +336,18 @@ export default function App() {
 
     // For other modes, we filter first, THEN shuffle if there is a seed
     switch (studyMode) {
-      case 'all':
-        list = vocab;
+      case 'all': {
+        const unmastered = vocab.filter(w => wordStatuses[w.name] !== 'mastered');
+        if (unmastered.length === 0 && vocab.length > 0) {
+          // If all words are mastered, fallback to all words so user is not left empty-handed
+          list = vocab;
+        } else {
+          const reviewWords = unmastered.filter(w => wordStatuses[w.name] === 'review');
+          const newWords = unmastered.filter(w => !wordStatuses[w.name]);
+          list = [...reviewWords, ...newWords];
+        }
         break;
+      }
       case 'new_all':
         list = vocab.filter(w => w.version === 'new');
         break;
@@ -519,14 +420,151 @@ export default function App() {
     return list;
   }, [studyMode, activeSetId, vocab, wordStatuses, markedWords, savedSets, shuffleSeed]);
 
+  // Save session state periodically or on change
   useEffect(() => {
-    // Only clip index if data and preferences are loaded.
-    // This prevents the index from resetting to 0 during the brief moment on refresh
-    // where some vocab (like SAT) might not have been loaded into the studyList yet.
-    if (isDataLoaded && isPrefsLoaded && studyList.length > 0 && currentIndex >= studyList.length) {
-      setCurrentIndex(0);
+    if (isPrefsLoaded && currentUser) {
+      const currentWordName = studyList[currentIndex]?.name;
+      const timer = setTimeout(() => {
+        hybridService.savePreferences(
+          theme,
+          showDefaultVocab,
+          showSatVocab,
+          studyMode,
+          activeSetId || undefined,
+          currentIndex,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          currentWordName
+        );
+      }, 2000); // 2 second debounce
+      return () => clearTimeout(timer);
     }
-  }, [studyList.length, currentIndex, isDataLoaded, isPrefsLoaded]);
+  }, [theme, showDefaultVocab, showSatVocab, studyMode, activeSetId, currentIndex, currentUser, isPrefsLoaded, studyList]);
+
+  // --- INITIALIZATION ---
+  useEffect(() => {
+    // 1. Check current local/hybrid user
+    async function initUser() {
+      try {
+        const user = await hybridService.getCurrentUser();
+        if (user) {
+          setCurrentUser(user.username);
+          setStorageMode(user.mode);
+        }
+      } finally {
+        setIsAuthChecking(false);
+      }
+    }
+    initUser();
+
+    // 2. Listen for Supabase auth changes (for OAuth flow)
+    const unsubscribe = cloudService.onAuthStateChange(async (userId) => {
+      if (userId) {
+        hybridService.setCloudUserId(userId);
+        const cloudUser = await cloudService.getCurrentUser();
+        if (cloudUser) {
+          setCurrentUser(cloudUser.username);
+          setStorageMode('cloud');
+          hybridService.setStorageMode('cloud');
+        }
+      } else {
+        // Only clear if we were in cloud mode
+        const currentMode = hybridService.getStorageMode();
+        if (currentMode === 'cloud') {
+          hybridService.setCloudUserId(null);
+          setCurrentUser(null);
+          setStorageMode('local');
+        }
+      }
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // --- PERSISTENCE: Loading ---
+  useEffect(() => {
+    async function loadUserData() {
+      setIsDataLoaded(false);
+      setHasRestoredPosition(false);
+      if (currentUser) {
+        // Load user data via hybrid service
+        const userData = await hybridService.getUserData();
+        if (userData) {
+          // Normalize all word names to uppercase for consistency
+          const normalizedStatuses: WordStatusMap = {};
+          if (userData.wordStatuses) {
+            Object.entries(userData.wordStatuses).forEach(([name, status]) => {
+              normalizedStatuses[name.toUpperCase()] = status;
+            });
+          }
+
+          const normalizedMarked: MarkedWordsMap = {};
+          if (userData.markedWords) {
+            Object.entries(userData.markedWords).forEach(([name, marked]) => {
+              normalizedMarked[name.toUpperCase()] = !!marked;
+            });
+          }
+
+          setWordStatuses(normalizedStatuses);
+          setMarkedWords(normalizedMarked);
+          setSavedSets(userData.savedSets || []);
+          setCustomVocab(userData.customVocab?.map(w => ({ ...w, name: w.name.toUpperCase() })) || []);
+        }
+
+        // Navigation stats
+        setStudyMode((localStorage.getItem(`ssat_${currentUser}_mode`) as StudyMode) || 'all');
+        setActiveSetId(localStorage.getItem(`ssat_${currentUser}_set_id`));
+        const lastIdx = localStorage.getItem(`ssat_${currentUser}_index`);
+        setCurrentIndex(lastIdx ? parseInt(lastIdx, 10) : 0);
+        const lastWord = localStorage.getItem(`ssat_${currentUser}_word`);
+        if (lastWord) setLastWordName(lastWord);
+      }
+      setIsDataLoaded(true);
+    }
+    loadUserData();
+  }, [currentUser]);
+
+  // --- PERSISTENCE: Saving ---
+  useEffect(() => {
+    if (isDataLoaded && currentUser) {
+      hybridService.saveUserData({ wordStatuses, markedWords, savedSets, customVocab });
+    }
+  }, [wordStatuses, markedWords, savedSets, customVocab, currentUser, isDataLoaded]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`ssat_${currentUser}_mode`, studyMode);
+      if (activeSetId) localStorage.setItem(`ssat_${currentUser}_set_id`, activeSetId);
+      else localStorage.removeItem(`ssat_${currentUser}_set_id`);
+      localStorage.setItem(`ssat_${currentUser}_index`, currentIndex.toString());
+      if (studyList[currentIndex]?.name) {
+        localStorage.setItem(`ssat_${currentUser}_word`, studyList[currentIndex].name);
+      }
+    }
+  }, [studyMode, activeSetId, currentIndex, currentUser, studyList]);
+
+  useEffect(() => {
+    // Exact word position restoration when entering the app / loading preferences
+    if (isDataLoaded && isPrefsLoaded && studyList.length > 0) {
+      if (!hasRestoredPosition) {
+        const savedWord = lastWordName || (currentUser ? localStorage.getItem(`ssat_${currentUser}_word`) : null);
+        if (savedWord) {
+          const matchIndex = studyList.findIndex(w => w.name === savedWord);
+          if (matchIndex !== -1) {
+            setCurrentIndex(matchIndex);
+          }
+        }
+        setHasRestoredPosition(true);
+      } else if (currentIndex >= studyList.length) {
+        setCurrentIndex(0);
+      }
+    }
+  }, [isDataLoaded, isPrefsLoaded, studyList, hasRestoredPosition, lastWordName, currentUser, currentIndex]);
 
   const updateStudyList = useCallback((mode: StudyMode, setId?: string) => {
     setStudyMode(mode);

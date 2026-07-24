@@ -400,6 +400,7 @@ export const hybridService = {
         lastStudyMode?: string;
         lastActiveSetId?: string;
         lastCardIndex?: number;
+        lastWordName?: string;
     } | null> {
         const mode = getStorageMode();
         const cloudUserId = getCloudUserId();
@@ -424,7 +425,8 @@ export const hybridService = {
                 repeatNudgeEnabled: (localPrefs as any).repeatNudgeEnabled ?? true,
                 lastStudyMode: localStorage.getItem(`ssat_${localPrefs.username}_mode`) || 'all',
                 lastActiveSetId: localStorage.getItem(`ssat_${localPrefs.username}_set_id`) || undefined,
-                lastCardIndex: parseInt(localStorage.getItem(`ssat_${localPrefs.username}_index`) || '0', 10)
+                lastCardIndex: parseInt(localStorage.getItem(`ssat_${localPrefs.username}_index`) || '0', 10),
+                lastWordName: localStorage.getItem(`ssat_${localPrefs.username}_word`) || undefined
             };
         }
 
@@ -468,7 +470,8 @@ export const hybridService = {
         reminderTime?: string,
         eveningReminderEnabled?: boolean,
         eveningReminderTime?: string,
-        repeatNudgeEnabled?: boolean
+        repeatNudgeEnabled?: boolean,
+        lastWordName?: string
     ): Promise<boolean> {
         const cloudUserId = getCloudUserId();
         const localUsername = authService.getCurrentUser();
@@ -487,7 +490,8 @@ export const hybridService = {
                 lastActiveSetId, 
                 lastCardIndex,
                 reminderEnabled,
-                reminderTime
+                reminderTime,
+                lastWordName
             );
         }
 
@@ -514,7 +518,11 @@ export const hybridService = {
                 eveningReminderEnabled: eveningReminderEnabled ?? existing.eveningReminderEnabled ?? true,
                 eveningReminderTime: eveningReminderTime || existing.eveningReminderTime || '20:00',
                 repeatNudgeEnabled: repeatNudgeEnabled ?? existing.repeatNudgeEnabled ?? true,
+                lastWordName: lastWordName || existing.lastWordName || undefined
             }));
+            if (lastWordName) {
+                localStorage.setItem(`ssat_${localUsername.toLowerCase()}_word`, lastWordName);
+            }
         }
 
         return true;

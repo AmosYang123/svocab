@@ -55,66 +55,86 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, initialMode = 'lo
         setLoading(true);
 
         const rawInput = emailOrUser.trim().toLowerCase();
-        const targetEmail = rawInput.includes('@') ? rawInput : `${rawInput}@vocab.app`;
+        if (!rawInput) {
+            setError('Please enter an email address or username.');
+            setLoading(false);
+            return;
+        }
+
         const isCloudAvailable = cloudService.isConfigured();
 
         try {
-            if (isCloudAvailable) {
-                hybridService.setStorageMode('hybrid');
-                if (isLogin) {
-                    const res = await cloudService.loginWithEmail(targetEmail, password);
-                    if (res.success && res.username) {
-                        if (res.userId) {
-                            hybridService.setCloudUserId(res.userId);
-                        }
-                        onLoginSuccess(res.username);
+            if (isLogin) {
+                // --- LOGIN ---
+                let cloudRes: any = null;
+
+                if (isCloudAvailable) {
+                    hybridService.setStorageMode('hybrid');
+                    if (rawInput.includes('@')) {
+                        cloudRes = await cloudService.loginWithEmail(rawInput, password);
                     } else {
-                        setError(res.message || 'Login failed.');
+                        cloudRes = await cloudService.login(rawInput, password);
                     }
+                }
+
+                if (cloudRes && cloudRes.success && cloudRes.username) {
+                    if (cloudRes.userId) {
+                        hybridService.setCloudUserId(cloudRes.userId);
+                    }
+                    authService.setSession(cloudRes.username);
+                    onLoginSuccess(cloudRes.username);
+                    return;
+                }
+
+                // Local Device Account Fallback if Cloud Login failed or not available
+                const localRes = await authService.login(rawInput.includes('@') ? rawInput.split('@')[0] : rawInput, password);
+                if (localRes.success && localRes.user) {
+                    hybridService.setStorageMode('local');
+                    onLoginSuccess(localRes.user);
                 } else {
-                    if (password !== confirmPassword) {
-                        setError('Passwords do not match.');
-                        setLoading(false);
-                        return;
-                    }
-                    const res = await cloudService.registerWithEmail(targetEmail, password);
-                    if (res.success && res.username) {
-                        if (res.userId) {
-                            hybridService.setCloudUserId(res.userId);
-                        }
-                        onLoginSuccess(res.username);
-                    } else {
-                        setError(res.message || 'Registration failed.');
-                    }
+                    setError(cloudRes?.message || localRes.message || 'Login failed. Invalid username/email or password.');
                 }
             } else {
-                // Local Device Account Fallback
-                hybridService.setStorageMode('local');
+                // --- SIGN UP ---
+                if (password !== confirmPassword) {
+                    setError('Passwords do not match.');
+                    setLoading(false);
+                    return;
+                }
 
-                if (isLogin) {
-                    const res = await authService.login(emailOrUser, password);
-                    if (res.success && res.user) {
-                        onLoginSuccess(res.user);
-                    } else {
-                        setError(res.message || 'Local sign-in failed. Invalid username or password.');
-                    }
-                } else {
-                    if (password !== confirmPassword) {
-                        setError('Passwords do not match.');
-                        setLoading(false);
-                        return;
-                    }
+                if (password.length < 4) {
+                    setError('Password must be at least 4 characters long.');
+                    setLoading(false);
+                    return;
+                }
 
-                    const res = await authService.register(emailOrUser, password);
-                    if (res.success && res.user) {
-                        onLoginSuccess(res.user);
+                let cloudRes: any = null;
+                if (isCloudAvailable) {
+                    hybridService.setStorageMode('hybrid');
+                    if (rawInput.includes('@')) {
+                        cloudRes = await cloudService.registerWithEmail(rawInput, password);
                     } else {
-                        setError(res.message || 'Registration failed.');
+                        cloudRes = await cloudService.register(rawInput, password);
                     }
                 }
+
+                // Register local account in IndexedDB too for seamless offline fallback
+                const cleanUser = rawInput.includes('@') ? rawInput.split('@')[0] : rawInput;
+                const localRes = await authService.register(cleanUser, password);
+
+                if ((cloudRes && cloudRes.success && cloudRes.username) || (localRes && localRes.success && localRes.user)) {
+                    const finalUsername = cloudRes?.username || localRes.user || cleanUser;
+                    if (cloudRes?.userId) {
+                        hybridService.setCloudUserId(cloudRes.userId);
+                    }
+                    authService.setSession(finalUsername);
+                    onLoginSuccess(finalUsername);
+                } else {
+                    setError(cloudRes?.message || localRes.message || 'Registration failed.');
+                }
             }
-        } catch {
-            setError('An unexpected error occurred during sign in.');
+        } catch (err: any) {
+            setError(err?.message || 'An unexpected error occurred during sign in.');
         } finally {
             setLoading(false);
         }

@@ -78,12 +78,24 @@ export const cloudService = {
                 return profile.username;
             }
 
+            // Check if username is already taken by another user
+            let targetUsername = finalUsername;
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('username', targetUsername)
+                .maybeSingle();
+
+            if (existing && existing.id !== userId) {
+                targetUsername = `${finalUsername}_${Math.floor(Math.random() * 1000)}`;
+            }
+
             // Insert profile record explicitly if trigger didn't catch it
             await supabase
                 .from('profiles')
-                .upsert({ id: userId, username: finalUsername }, { onConflict: 'id' });
+                .upsert({ id: userId, username: targetUsername }, { onConflict: 'id' });
 
-            return finalUsername;
+            return targetUsername;
         } catch {
             return emailOrUsername.split('@')[0];
         }
@@ -108,11 +120,25 @@ export const cloudService = {
             const { data, error } = authResult;
 
             if (error) {
+                if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+                    return { success: false, message: 'An account with this email already exists. Please log in.' };
+                }
                 return { success: false, message: error.message };
             }
 
             if (!data.user) {
                 return { success: false, message: 'Registration failed.' };
+            }
+
+            // If Supabase has email confirmation ON, user session will be null until confirmed
+            if (!data.session) {
+                const finalUsername = await this.ensureUserProfile(data.user.id, normalizedEmail);
+                return {
+                    success: true,
+                    message: 'Account created! Please check your email to confirm your account before logging in.',
+                    userId: data.user.id,
+                    username: finalUsername
+                };
             }
 
             // Ensure profile exists in profiles table
@@ -147,6 +173,9 @@ export const cloudService = {
                 if (error.message.includes('Invalid login credentials')) {
                     return { success: false, message: 'Invalid email or password.' };
                 }
+                if (error.message.includes('Email not confirmed')) {
+                    return { success: false, message: 'Email not confirmed yet. Please check your inbox or disable email confirmation in Supabase.' };
+                }
                 return { success: false, message: error.message };
             }
 
@@ -175,39 +204,29 @@ export const cloudService = {
 
         try {
             const normalizedUsername = username.trim().toLowerCase();
-            // Generate fake email from username for Supabase auth
-            const fakeEmail = `${normalizedUsername}@vocab.internal`;
+            const email = normalizedUsername.includes('@') ? normalizedUsername : `${normalizedUsername}@vocab.app`;
 
-            // Check if username is already taken
-            const { data: existingProfile } = await withTimeout(supabase
-                .from('profiles')
-                .select('username')
-                .eq('username', normalizedUsername)
-                .single());
-
-            if (existingProfile) {
-                return { success: false, message: 'Username already taken.' };
+            // Security: Username validation if not an email
+            if (!normalizedUsername.includes('@')) {
+                const usernameRegex = /^[a-z0-9._]{3,30}$/;
+                if (!usernameRegex.test(normalizedUsername)) {
+                    return { success: false, message: 'Username must be 3-30 characters, alphanumeric, dots, or underscores.' };
+                }
             }
 
-            // Security: Strict username validation
-            const usernameRegex = /^[a-z0-9._]{3,20}$/;
-            if (!usernameRegex.test(normalizedUsername)) {
-                return { success: false, message: 'Username must be 3-20 characters, alphanumeric, dots, or underscores.' };
-            }
-
-            // Create auth user with fake email
+            // Create auth user in Supabase
             const authResult = await withTimeout(supabase.auth.signUp({
-                email: fakeEmail,
+                email,
                 password,
                 options: {
-                    data: { username: normalizedUsername }
+                    data: { username: normalizedUsername.split('@')[0] }
                 }
             }));
             const { data: authData, error: authError } = authResult;
 
             if (authError) {
                 if (authError.message.includes('already registered')) {
-                    return { success: false, message: 'Username already taken.' };
+                    return { success: false, message: 'Username or email already taken.' };
                 }
                 return { success: false, message: authError.message };
             }
@@ -216,14 +235,16 @@ export const cloudService = {
                 return { success: false, message: 'Registration failed.' };
             }
 
+            const finalUsername = await this.ensureUserProfile(authData.user.id, normalizedUsername);
+
             return {
                 success: true,
                 message: 'Account created successfully!',
                 userId: authData.user.id,
-                username: normalizedUsername,
+                username: finalUsername,
             };
         } catch (error: any) {
-            return { success: false, message: error?.message || 'Registration failed. Operating in local mode.' };
+            return { success: false, message: error?.message || 'Registration failed.' };
         }
     },
 
@@ -234,17 +255,43 @@ export const cloudService = {
 
         try {
             const normalizedUsername = username.trim().toLowerCase();
-            const fakeEmail = `${normalizedUsername}@vocab.internal`;
 
-            const signInResult = await withTimeout(supabase.auth.signInWithPassword({
-                email: fakeEmail,
+            // Try with @vocab.app domain first
+            let signInResult = await withTimeout(supabase.auth.signInWithPassword({
+                email: `${normalizedUsername}@vocab.app`,
                 password,
             }));
+
+            // Fallback to @vocab.internal domain if needed
+            if (signInResult.error) {
+                const fallbackResult = await withTimeout(supabase.auth.signInWithPassword({
+                    email: `${normalizedUsername}@vocab.internal`,
+                    password,
+                }));
+                if (!fallbackResult.error) {
+                    signInResult = fallbackResult;
+                }
+            }
+
+            // Fallback to raw email if username contains @
+            if (signInResult.error && normalizedUsername.includes('@')) {
+                const rawEmailResult = await withTimeout(supabase.auth.signInWithPassword({
+                    email: normalizedUsername,
+                    password,
+                }));
+                if (!rawEmailResult.error) {
+                    signInResult = rawEmailResult;
+                }
+            }
+
             const { data, error } = signInResult;
 
             if (error) {
                 if (error.message.includes('Invalid login credentials')) {
                     return { success: false, message: 'Invalid username or password.' };
+                }
+                if (error.message.includes('Email not confirmed')) {
+                    return { success: false, message: 'Email not confirmed yet. Please check your inbox or disable email confirmation in Supabase.' };
                 }
                 return { success: false, message: error.message };
             }
@@ -253,21 +300,17 @@ export const cloudService = {
                 return { success: false, message: 'Login failed.' };
             }
 
-            // Get username from profile
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('username')
-                .eq('id', data.user.id)
-                .single();
+            // Ensure profile exists in profiles table
+            const finalUsername = await this.ensureUserProfile(data.user.id, normalizedUsername);
 
             return {
                 success: true,
                 message: 'Login successful!',
                 userId: data.user.id,
-                username: profile?.username || normalizedUsername,
+                username: finalUsername,
             };
-        } catch (error) {
-            return { success: false, message: 'Login failed. Please try again.' };
+        } catch (error: any) {
+            return { success: false, message: error?.message || 'Login failed. Please try again.' };
         }
     },
 
@@ -514,18 +557,19 @@ export const cloudService = {
         lastStudyMode?: string;
         lastActiveSetId?: string;
         lastCardIndex?: number;
+        lastWordName?: string;
     } | null> {
         if (!isSupabaseConfigured) return null;
 
         try {
             const { data, error } = await supabase
                 .from('user_preferences')
-                .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index, reminder_enabled, reminder_time')
+                .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index, reminder_enabled, reminder_time, last_word_name')
                 .eq('user_id', userId)
                 .maybeSingle();
 
             if (error) {
-                // Fallback for database instances where reminder columns haven't been added yet
+                // Fallback for database instances where newer columns haven't been added yet
                 const { data: fallbackData } = await supabase
                     .from('user_preferences')
                     .select('theme, show_default_vocab, show_sat_vocab, last_study_mode, last_active_set_id, last_card_index')
@@ -542,7 +586,8 @@ export const cloudService = {
                         reminderTime: '09:00',
                         lastStudyMode: casted.last_study_mode || 'all',
                         lastActiveSetId: casted.last_active_set_id || null,
-                        lastCardIndex: casted.last_card_index ?? 0
+                        lastCardIndex: casted.last_card_index ?? 0,
+                        lastWordName: casted.last_word_name || null
                     };
                 }
                 return null;
@@ -558,7 +603,8 @@ export const cloudService = {
                 reminderTime: castedData?.reminder_time ?? '09:00',
                 lastStudyMode: castedData?.last_study_mode || 'all',
                 lastActiveSetId: castedData?.last_active_set_id || null,
-                lastCardIndex: castedData?.last_card_index ?? 0
+                lastCardIndex: castedData?.last_card_index ?? 0,
+                lastWordName: castedData?.last_word_name || null
             } : null;
         } catch (error) {
             return null;
@@ -574,7 +620,8 @@ export const cloudService = {
         lastActiveSetId?: string,
         lastCardIndex?: number,
         reminderEnabled?: boolean,
-        reminderTime?: string
+        reminderTime?: string,
+        lastWordName?: string
     ): Promise<boolean> {
         if (!isSupabaseConfigured) return false;
 
@@ -590,6 +637,7 @@ export const cloudService = {
             if (lastStudyMode !== undefined) updateObj.last_study_mode = lastStudyMode;
             if (lastActiveSetId !== undefined) updateObj.last_active_set_id = lastActiveSetId;
             if (lastCardIndex !== undefined) updateObj.last_card_index = lastCardIndex;
+            if (lastWordName !== undefined) updateObj.last_word_name = lastWordName;
             if (reminderEnabled !== undefined) updateObj.reminder_enabled = reminderEnabled;
             if (reminderTime !== undefined) updateObj.reminder_time = reminderTime;
 
@@ -597,10 +645,11 @@ export const cloudService = {
                 .from('user_preferences')
                 .upsert(updateObj);
 
-            if (error && (reminderEnabled !== undefined || reminderTime !== undefined)) {
-                // If reminder columns don't exist yet in Supabase schema, strip them and retry so other prefs save
+            if (error) {
+                // If new columns (reminder_enabled, last_word_name) don't exist yet in user's Supabase schema, strip them and retry
                 delete updateObj.reminder_enabled;
                 delete updateObj.reminder_time;
+                delete updateObj.last_word_name;
                 const retry = await supabase.from('user_preferences').upsert(updateObj);
                 return !retry.error;
             }

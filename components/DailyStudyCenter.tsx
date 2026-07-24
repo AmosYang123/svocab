@@ -216,13 +216,15 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
         );
     };
 
-    const [testMsg, setTestMsg] = useState<string | null>(null);
-
     const handleTestNotification = async () => {
-        const res = await notificationService.sendTestNotification(streak);
+        const success = await notificationService.sendTestNotification(streak);
         setNotifPermission(notificationService.getPermissionStatus());
-        setTestMsg(res.message);
-        setTimeout(() => setTestMsg(null), 4500);
+        if (success) {
+            setTestSent(true);
+            setTimeout(() => setTestSent(false), 3000);
+        } else {
+            alert("Could not send test notification. Please ensure browser notification permissions are allowed in your browser settings.");
+        }
     };
 
     const handleChangeReminderTime = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -510,85 +512,120 @@ export default function DailyStudyCenter({ vocab, onStartExercise, onViewReview 
                     </div>
                 </div>
 
-                {/* Minimalist Notifications Bar */}
-                <div className="bg-card rounded-2xl p-4 border border-border shadow-xs">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-xl ${reminderEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                                {reminderEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
-                            </div>
-                            <div>
-                                <div className="text-xs font-bold text-foreground">Daily Reminders</div>
-                                <div className="text-[10px] text-muted-foreground">Streak protection & nudges</div>
-                            </div>
+                {/* Notifications Config Card */}
+                <div className="bg-card rounded-2xl p-6 border border-border shadow-xs space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2.5 rounded-xl ${reminderEnabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                            {reminderEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
                         </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                                Daily Study Reminders
+                            </h3>
+                            <p className="text-[10px] text-muted-foreground">Never miss a streak workout</p>
+                        </div>
+                    </div>
 
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                            {reminderEnabled && (
-                                <input
-                                    type="time"
-                                    value={reminderTime}
-                                    onChange={handleChangeReminderTime}
-                                    className="bg-background border border-input px-2.5 py-1 rounded-lg text-xs font-mono text-foreground focus:outline-none focus:border-ring cursor-pointer"
-                                />
-                            )}
+                    <div className="space-y-4 pt-1">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-foreground">
+                                Notification Alert Status
+                            </span>
                             <button
                                 onClick={handleToggleReminder}
                                 aria-label="Toggle daily study reminder"
-                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                                     reminderEnabled ? 'bg-primary' : 'bg-muted'
                                 }`}
                             >
                                 <span
-                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                        reminderEnabled ? 'translate-x-4' : 'translate-x-0'
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                        reminderEnabled ? 'translate-x-5' : 'translate-x-0'
                                     }`}
                                 />
                             </button>
                         </div>
-                    </div>
 
-                    {reminderEnabled && (
-                        <div className="mt-3 pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-2">
+                        {reminderEnabled && (
+                            <div className="space-y-3.5 border-t border-border pt-3.5 animate-in slide-in-from-top-2 duration-200">
+                                {/* Preferred Morning Time */}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-foreground">
+                                        Morning Reminder Time
+                                    </span>
+                                    <input
+                                        type="time"
+                                        value={reminderTime}
+                                        onChange={handleChangeReminderTime}
+                                        className="bg-background border border-input px-3 py-1 rounded-lg text-xs font-mono text-foreground focus:outline-none focus:border-ring cursor-pointer"
+                                    />
+                                </div>
+
+                                {/* Evening Streak Protection Toggle */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-medium text-foreground">Evening Streak Saver</div>
+                                        <div className="text-[10px] text-muted-foreground">Alert at 8:00 PM if workout is uncompleted</div>
+                                    </div>
+                                    <button
+                                        onClick={handleToggleEveningReminder}
+                                        aria-label="Toggle evening streak saver"
+                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            eveningReminderEnabled ? 'bg-amber-500' : 'bg-muted'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                eveningReminderEnabled ? 'translate-x-4' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* 5-Minute Escalation Nudge Toggle */}
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-medium text-foreground">5-Min Repeat Nudges</div>
+                                        <div className="text-[10px] text-muted-foreground">Repeat reminder every 5m if no words learned</div>
+                                    </div>
+                                    <button
+                                        onClick={handleToggleRepeatNudge}
+                                        aria-label="Toggle 5-minute repeat nudges"
+                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                            repeatNudgeEnabled ? 'bg-primary' : 'bg-muted'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                repeatNudgeEnabled ? 'translate-x-4' : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Test Notification Button */}
                                 <button
-                                    onClick={handleToggleEveningReminder}
-                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
-                                        eveningReminderEnabled
-                                            ? 'bg-amber-500/10 text-amber-600 border-amber-500/30'
-                                            : 'bg-muted/40 text-muted-foreground border-transparent'
+                                    onClick={handleTestNotification}
+                                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                        testSent
+                                            ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/30'
+                                            : 'bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20'
                                     }`}
                                 >
-                                    🌙 8 PM Saver: {eveningReminderEnabled ? 'ON' : 'OFF'}
+                                    <Bell className="w-3.5 h-3.5" />
+                                    {testSent ? '✓ Test Notification Sent!' : 'Test Notification Now'}
                                 </button>
 
-                                <button
-                                    onClick={handleToggleRepeatNudge}
-                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
-                                        repeatNudgeEnabled
-                                            ? 'bg-primary/10 text-primary border-primary/30'
-                                            : 'bg-muted/40 text-muted-foreground border-transparent'
-                                    }`}
-                                >
-                                    ⏰ 5m Nudges: {repeatNudgeEnabled ? 'ON' : 'OFF'}
-                                </button>
+                                {/* System note */}
+                                <div className="bg-muted/60 p-3 rounded-xl border border-border flex items-start gap-2 text-[10px] text-muted-foreground font-mono">
+                                    <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                    <span>
+                                        iPhone/iOS Note: To get native pop-up notifications, tap <strong>Share (↑)</strong> in Safari and select <strong>Add to Home Screen</strong>.
+                                    </span>
+                                </div>
                             </div>
-
-                            <button
-                                onClick={handleTestNotification}
-                                className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-muted hover:bg-muted/80 text-foreground transition-all border border-border cursor-pointer flex items-center gap-1"
-                            >
-                                <Bell className="w-3 h-3 text-primary" />
-                                Test Alert
-                            </button>
-                        </div>
-                    )}
-
-                    {testMsg && (
-                        <div className="mt-2 text-[10px] font-mono text-primary bg-primary/10 p-2 rounded-lg border border-primary/20 animate-in fade-in duration-150">
-                            {testMsg}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

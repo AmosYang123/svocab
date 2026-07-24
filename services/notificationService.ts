@@ -53,66 +53,32 @@ export const notificationService = {
     // ----------------
     // Core Actions
     // ----------------
-    async dispatchNotification(title: string, options: NotificationOptions): Promise<boolean> {
-        if (!this.isSupported()) return false;
-
-        // 1. Try ServiceWorker Registration (Android, Chrome, PWAs, Edge)
-        if ('serviceWorker' in navigator) {
-            try {
-                const reg = await navigator.serviceWorker.ready;
-                if (reg && reg.showNotification) {
-                    await reg.showNotification(title, options);
-                    return true;
-                }
-            } catch (swErr) {
-                // Ignore SW error, try standard constructor
-            }
-        }
-
-        // 2. Fallback to standard Notification Constructor
-        if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-                const notif = new Notification(title, options);
-                notif.onclick = () => {
-                    window.focus();
-                };
-                return true;
-            } catch (nErr) {
-                console.error('[notificationService] Failed Notification constructor:', nErr);
-                return false;
-            }
-        }
-
-        return false;
-    },
-
-    async sendTestNotification(streakCount: number = 1): Promise<{ success: boolean; message: string }> {
-        if (!this.isSupported()) {
-            return { success: false, message: "Notifications are not supported in your browser." };
-        }
-
-        if (this.getPermissionStatus() === 'denied') {
-            return { success: false, message: "Notifications are blocked. Click the Lock/Tune icon near the website URL to allow notifications." };
-        }
-
+    async sendTestNotification(streakCount: number = 1): Promise<boolean> {
         const granted = await this.requestPermission();
-        if (!granted) {
-            return { success: false, message: "Notification permission was not granted." };
-        }
+        if (!granted) return false;
 
-        const title = "SSAT Vocab Mastery 📚";
+        const title = "SSAT Vocab Mastery (Test) 📚";
         const options: NotificationOptions = {
-            body: `Test alert successful! Your ${streakCount}-day streak reminders are active.`,
+            body: `Notifications are active! Your ${streakCount}-day streak protection is enabled.`,
             icon: '/favicon.ico',
             badge: '/favicon.ico',
             tag: 'test-notification',
+            requireInteraction: true,
         };
 
-        const sent = await this.dispatchNotification(title, options);
-        if (sent) {
-            return { success: true, message: "Test alert dispatched! If you don't see a popup, check Windows/macOS Focus Mode." };
+        try {
+            const notif = new Notification(title, options);
+            notif.onclick = () => {
+                window.focus();
+                if (window.location.pathname !== '/daily') {
+                    window.location.href = '/daily';
+                }
+            };
+            return true;
+        } catch (e) {
+            console.error('[notificationService] Error sending test notification:', e);
+            return false;
         }
-        return { success: false, message: "Could not display popup notification." };
     },
 
     async triggerReminder(opts: ReminderOptions = {}): Promise<boolean> {
@@ -152,9 +118,22 @@ export const notificationService = {
             icon: '/favicon.ico',
             badge: '/favicon.ico',
             tag: opts.isEscalation ? 'escalation-nudge' : opts.isEvening ? 'evening-saver' : 'daily-reminder',
+            requireInteraction: true,
         };
 
-        return await this.dispatchNotification(title, options);
+        try {
+            const notif = new Notification(title, options);
+            notif.onclick = () => {
+                window.focus();
+                if (window.location.pathname !== '/daily-exercise') {
+                    window.location.href = '/daily-exercise';
+                }
+            };
+            return true;
+        } catch (e) {
+            console.error('[notificationService] Trigger notification error:', e);
+            return false;
+        }
     },
 
     // ----------------
